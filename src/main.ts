@@ -7,7 +7,7 @@ import { Stage } from './scene/stage';
 import { createOverlay } from './ui/overlay';
 
 const stage = new Stage(document.getElementById('stage')!);
-const meadow = createMeadow(stage.scene);
+const meadow = await createMeadow(stage.scene);
 stage.scene.add(meadow.root);
 stage.onUpdate(meadow.update);
 

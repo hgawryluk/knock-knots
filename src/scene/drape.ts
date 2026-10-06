@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { Branch } from './branch';
+import type { Branch } from './log';
 
 /** Static placeholder rope: lies on the grass, goes once over the branch and trails off the back. */
 export function drapeOverBranch(branch: Branch, ropeRadius: number, x = 0.25): THREE.Vector3[] {

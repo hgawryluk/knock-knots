@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { createNoise2D, createRng } from '../utils/noise';
-import { createBranch, type Branch } from './branch';
+import { loadLog, type Branch } from './log';
 import { createGroundTexture, createLeafShadowTexture } from './textures';
 
 const BACKGROUND = '#262b1c';
@@ -12,15 +12,15 @@ export interface Meadow {
   update: (dt: number, elapsed: number) => void;
 }
 
-/** Forest-floor clearing: ground, grass tufts, two stones and a branch resting on them, in dappled sun. */
-export function createMeadow(scene: THREE.Scene): Meadow {
+/** Forest-floor clearing: ground, grass tufts, two stones and a scanned log resting on them, in dappled sun. */
+export async function createMeadow(scene: THREE.Scene): Promise<Meadow> {
   scene.background = new THREE.Color(BACKGROUND);
   scene.fog = new THREE.Fog(BACKGROUND, 11, 26);
 
   const root = new THREE.Group();
   root.add(createGround(), createGrass(), ...createStones());
 
-  const branch = createBranch();
+  const branch = await loadLog({ url: `${import.meta.env.BASE_URL}assets/log.glb`, length: 4.2, baseHeight: 0.3 });
   root.add(branch.object);
 
   const hemisphere = new THREE.HemisphereLight('#e4ecd2', '#3b3122', 0.9);
@@ -108,8 +108,8 @@ function createGrass(): THREE.InstancedMesh {
 
 function createStones(): THREE.Mesh[] {
   return [
-    createStone(0.48, 0.34, new THREE.Vector3(-1.45, 0, 0.02), 31),
-    createStone(0.44, 0.31, new THREE.Vector3(1.4, 0, 0.06), 47),
+    createStone(0.48, 0.32, new THREE.Vector3(-1.45, 0, 0.02), 31),
+    createStone(0.44, 0.32, new THREE.Vector3(1.4, 0, 0.06), 47),
   ];
 }
 
