@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import { createNoise2D, createRng } from '../utils/noise';
+import { CanopyShadow } from './canopy';
 import { loadLog, type Branch } from './log';
 import { loadModel } from './models';
-import { createGroundTexture, createLeafShadowTexture } from './textures';
+import { createGroundTexture } from './textures';
 
 const BACKGROUND = '#262b1c';
 
@@ -13,7 +14,7 @@ export interface Meadow {
 }
 
 /** Forest-floor clearing: ground, grass tufts, two stones and a scanned log resting on them, in dappled sun. */
-export async function createMeadow(scene: THREE.Scene): Promise<Meadow> {
+export async function createMeadow(scene: THREE.Scene, renderer: THREE.WebGLRenderer): Promise<Meadow> {
   scene.background = new THREE.Color(BACKGROUND);
   scene.fog = new THREE.Fog(BACKGROUND, 11, 26);
 
@@ -22,7 +23,8 @@ export async function createMeadow(scene: THREE.Scene): Promise<Meadow> {
     loadLog({ file: 'log.glb', length: 4.2, baseHeight: 0.3 }),
     loadStones(0.31),
   ]);
-  root.add(createGround(), createGrass(), ...stones);
+  const wind = { value: 0 };
+  root.add(createGround(), createGrass(wind), ...stones);
   root.add(branch.object);
 
   const hemisphere = new THREE.HemisphereLight('#e4ecd2', '#3b3122', 0.9);
@@ -30,7 +32,8 @@ export async function createMeadow(scene: THREE.Scene): Promise<Meadow> {
 
   const sun = new THREE.SpotLight('#fff0d4', 3.2, 0, 0.55, 0.75, 0);
   sun.position.set(5, 16, 4);
-  sun.map = createLeafShadowTexture();
+  const canopy = new CanopyShadow();
+  sun.map = canopy.texture;
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
   sun.shadow.bias = -0.0004;
@@ -39,10 +42,10 @@ export async function createMeadow(scene: THREE.Scene): Promise<Meadow> {
   sun.shadow.camera.far = 30;
   root.add(sun, sun.target);
 
-  // A slow drift of the sun makes the canopy shade feel alive.
+  // Canopy shade and grass share one wind clock so gusts feel connected.
   const update = (_dt: number, elapsed: number): void => {
-    sun.position.x = 5 + Math.sin(elapsed * 0.35) * 0.25;
-    sun.position.z = 4 + Math.cos(elapsed * 0.27) * 0.2;
+    wind.value = elapsed;
+    canopy.update(renderer, elapsed);
   };
 
   return { root, branch, update };
@@ -61,7 +64,7 @@ function createGround(): THREE.Mesh {
 }
 
 /** Instanced blades scattered in patches; denser where the ground noise says grass. */
-function createGrass(): THREE.InstancedMesh {
+function createGrass(wind: { value: number }): THREE.InstancedMesh {
   const blade = new THREE.PlaneGeometry(0.035, 1, 1, 4);
   blade.translate(0, 0.5, 0);
   const position = blade.attributes.position;
@@ -74,6 +77,23 @@ function createGrass(): THREE.InstancedMesh {
 
   const count = 9000;
   const material = new THREE.MeshStandardMaterial({ side: THREE.DoubleSide, roughness: 0.9 });
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uWind = wind;
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nuniform float uWind;')
+      .replace(
+        '#include <begin_vertex>',
+        /* glsl */ `#include <begin_vertex>
+        // Bend grows with height; rolling gusts travel across the clearing.
+        vec3 bladeRoot = (modelMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+        float gust = sin(uWind * 1.1 - bladeRoot.x * 0.7 - bladeRoot.z * 0.4) * 0.5 + 0.5;
+        float flutter = sin(uWind * 4.0 + bladeRoot.x * 3.1 + bladeRoot.z * 2.3) * 0.25;
+        float bend = transformed.y * transformed.y * (0.08 + 0.32 * gust + 0.06 * flutter);
+        vec3 localWind = transpose(mat3(instanceMatrix)) * vec3(0.9, 0.0, 0.45);
+        transformed.xz += normalize(localWind.xz) * bend;
+        transformed.y -= bend * bend * 0.5;`,
+      );
+  };
   const mesh = new THREE.InstancedMesh(blade, material, count);
   mesh.receiveShadow = true;
 

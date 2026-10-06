@@ -124,27 +124,3 @@ export function createGroundTexture(size = 1024, seed = 3): THREE.CanvasTexture 
 
   return toTexture(canvas);
 }
-
-/** Soft blotchy canopy mask projected by the sun spotlight for dappled shade. */
-export function createLeafShadowTexture(seed = 13): THREE.CanvasTexture {
-  const size = 512;
-  const [canvas, ctx] = makeCanvas(size);
-  const rng = createRng(seed);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, size, size);
-
-  ctx.filter = 'blur(7px)';
-  ctx.fillStyle = 'rgba(40, 40, 40, 0.75)';
-  for (let i = 0; i < 46; i++) {
-    const cx = rng() * size;
-    const cy = rng() * size;
-    const spread = 25 + rng() * 55;
-    for (let j = 0; j < 14; j++) {
-      const r = 5 + rng() * 16;
-      ctx.beginPath();
-      ctx.ellipse(cx + (rng() - 0.5) * spread * 2, cy + (rng() - 0.5) * spread * 2, r, r * (0.5 + rng() * 0.5), rng() * Math.PI, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-  return toTexture(canvas, false);
-}
