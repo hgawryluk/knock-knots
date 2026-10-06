@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { createNoise2D, createRng } from '../utils/noise';
 import { loadLog, type Branch } from './log';
+import { loadModel } from './models';
 import { createGroundTexture, createLeafShadowTexture } from './textures';
 
 const BACKGROUND = '#262b1c';
@@ -18,9 +18,11 @@ export async function createMeadow(scene: THREE.Scene): Promise<Meadow> {
   scene.fog = new THREE.Fog(BACKGROUND, 11, 26);
 
   const root = new THREE.Group();
-  root.add(createGround(), createGrass(), ...createStones());
-
-  const branch = await loadLog({ url: `${import.meta.env.BASE_URL}assets/log.glb`, length: 4.2, baseHeight: 0.3 });
+  const [branch, stones] = await Promise.all([
+    loadLog({ file: 'log.glb', length: 4.2, baseHeight: 0.3 }),
+    loadStones(0.31),
+  ]);
+  root.add(createGround(), createGrass(), ...stones);
   root.add(branch.object);
 
   const hemisphere = new THREE.HemisphereLight('#e4ecd2', '#3b3122', 0.9);
@@ -106,43 +108,22 @@ function createGrass(): THREE.InstancedMesh {
   return mesh;
 }
 
-function createStones(): THREE.Mesh[] {
-  return [
-    createStone(0.48, 0.32, new THREE.Vector3(-1.45, 0, 0.02), 31),
-    createStone(0.44, 0.32, new THREE.Vector3(1.4, 0, 0.06), 47),
+/** Two copies of the scanned stone, varied in footprint and rotation, with tops at `topHeight` to carry the log. */
+async function loadStones(topHeight: number): Promise<THREE.Object3D[]> {
+  const source = await loadModel('stone.glb');
+  const box = new THREE.Box3().setFromObject(source);
+  const sink = 0.04;
+  const heightScale = (topHeight + sink) / (box.max.y - box.min.y);
+
+  const placements = [
+    { x: -1.45, z: 0.02, spread: 1.0, turn: 0.4 },
+    { x: 1.4, z: 0.06, spread: 0.88, turn: 2.3 },
   ];
-}
-
-/** Lumpy, slightly flattened stone whose top sits at `height`. */
-function createStone(radius: number, height: number, position: THREE.Vector3, seed: number): THREE.Mesh {
-  const sphere = new THREE.IcosahedronGeometry(radius, 5);
-  sphere.deleteAttribute('normal');
-  sphere.deleteAttribute('uv');
-  // Icosahedron vertices are unshared; merge them so normals smooth across faces.
-  const geometry = mergeVertices(sphere);
-  const noise = createNoise2D(seed);
-  const p = geometry.attributes.position;
-  const v = new THREE.Vector3();
-  const colors: number[] = [];
-  const color = new THREE.Color();
-  for (let i = 0; i < p.count; i++) {
-    v.fromBufferAttribute(p, i);
-    const n = v.clone().normalize();
-    const bump = noise(n.x * 2.2 + n.y * 1.3, n.z * 2.2 - n.y * 0.7) * 0.12 + noise(n.x * 7, n.z * 7 + n.y * 3) * 0.03;
-    v.multiplyScalar(1 + bump);
-    v.y *= 0.72;
-    p.setXYZ(i, v.x, v.y, v.z);
-    color.setHSL(0.11, 0.05, 0.32 + bump * 1.2 + noise(n.x * 12, n.z * 12) * 0.04);
-    colors.push(color.r, color.g, color.b);
-  }
-  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-  geometry.computeVertexNormals();
-  geometry.computeBoundingBox();
-
-  const stone = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }));
-  stone.position.copy(position);
-  stone.position.y = height - geometry.boundingBox!.max.y;
-  stone.rotation.y = seed;
-  stone.castShadow = stone.receiveShadow = true;
-  return stone;
+  return placements.map(({ x, z, spread, turn }) => {
+    const stone = source.clone();
+    stone.scale.set(heightScale * spread, heightScale, heightScale * spread);
+    stone.rotation.y = turn;
+    stone.position.set(x, -sink - box.min.y * heightScale, z);
+    return stone;
+  });
 }

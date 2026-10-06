@@ -1,6 +1,5 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { loadModel } from './models';
 
 /** Something a rope can wrap around: the visual mesh plus a smooth centerline proxy for collisions. */
 export interface Branch {
@@ -12,7 +11,8 @@ export interface Branch {
 }
 
 export interface LogPlacement {
-  url: string;
+  /** GLB file name in public/assets/. */
+  file: string;
   /** Target length along X in world units. */
   length: number;
   /** World height of the log's underside (e.g. resting on stones). */
@@ -20,17 +20,8 @@ export interface LogPlacement {
 }
 
 /** Loads a scanned log lying along X and derives its collision proxy from the mesh itself. */
-export async function loadLog({ url, length, baseHeight }: LogPlacement): Promise<Branch> {
-  const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
-  const gltf = await loader.loadAsync(url);
-  const object = gltf.scene;
-
-  object.traverse((child) => {
-    if (child instanceof THREE.Mesh) {
-      child.castShadow = true;
-      child.receiveShadow = true;
-    }
-  });
+export async function loadLog({ file, length, baseHeight }: LogPlacement): Promise<Branch> {
+  const object = await loadModel(file);
 
   const box = new THREE.Box3().setFromObject(object);
   const size = box.getSize(new THREE.Vector3());
