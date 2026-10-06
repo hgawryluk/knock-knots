@@ -117,3 +117,156 @@ body {
     transform: translate(-50%, -6px);
   }
 }
+
+.hint-sub {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.knot-panel {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 280px;
+  padding: 18px 18px 16px;
+  border-radius: 14px;
+  background: var(--chip);
+  border: 1px solid var(--chip-border);
+  backdrop-filter: blur(10px);
+  pointer-events: auto;
+  animation: panel-in 700ms 200ms ease both;
+}
+
+.knot-type {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--chip-border);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.knot-name {
+  margin: 8px 0 4px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.knot-summary {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.knot-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+  display: grid;
+  gap: 6px;
+}
+
+.knot-steps li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  column-gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  transition: color 300ms ease;
+}
+
+.knot-steps li::before {
+  content: counter(step);
+  grid-row: span 2;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--chip-border);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  transition: background 300ms ease, border-color 300ms ease;
+}
+
+.knot-steps li.current {
+  color: var(--text);
+}
+
+.knot-steps li.current::before {
+  border-color: #2f7cf6;
+  background: rgba(47, 124, 246, 0.25);
+}
+
+.knot-steps li.done::before {
+  content: '✓';
+  border-color: #6fbf73;
+  background: rgba(111, 191, 115, 0.25);
+}
+
+.step-hint {
+  display: none;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.knot-steps li.current .step-hint {
+  display: block;
+}
+
+.knot-status {
+  height: 0;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  color: #8fd694;
+  transition: height 300ms ease, margin 300ms ease;
+}
+
+.knot-status.visible {
+  height: 20px;
+  margin-top: 12px;
+}
+
+.knot-reset {
+  margin-top: 14px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--chip-border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.knot-reset:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@media (max-width: 720px) {
+  .knot-panel {
+    top: auto;
+    bottom: 56px;
+    left: 16px;
+    right: 16px;
+    width: auto;
+  }
+  .knot-summary {
+    display: none;
+  }
+}

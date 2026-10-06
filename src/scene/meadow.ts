@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { createNoise2D, createRng } from '../utils/noise';
 import { CanopyShadow } from './canopy';
-import { loadLog, type Branch } from './log';
+import type { Ellipsoid } from '../rope/ropeSim';
+import { loadLog, type Log } from './log';
 import { loadModel } from './models';
 import { createGroundTexture } from './textures';
 
@@ -9,7 +10,9 @@ const BACKGROUND = '#262b1c';
 
 export interface Meadow {
   root: THREE.Group;
-  branch: Branch;
+  log: Log;
+  /** Stones as ellipsoids for rope collisions. */
+  obstacles: Ellipsoid[];
   update: (dt: number, elapsed: number) => void;
 }
 
@@ -19,13 +22,15 @@ export async function createMeadow(scene: THREE.Scene, renderer: THREE.WebGLRend
   scene.fog = new THREE.Fog(BACKGROUND, 11, 26);
 
   const root = new THREE.Group();
-  const [branch, stones] = await Promise.all([
+  const [log, stones] = await Promise.all([
     loadLog({ file: 'log.glb', length: 4.2, baseHeight: 0.3 }),
     loadStones(0.31),
   ]);
   const wind = { value: 0 };
   root.add(createGround(), createGrass(wind), ...stones);
-  root.add(branch.object);
+  root.add(log.object);
+  root.updateMatrixWorld(true);
+  const obstacles = stones.map(toEllipsoid);
 
   const hemisphere = new THREE.HemisphereLight('#e4ecd2', '#3b3122', 0.9);
   root.add(hemisphere);
@@ -48,7 +53,7 @@ export async function createMeadow(scene: THREE.Scene, renderer: THREE.WebGLRend
     canopy.update(renderer, elapsed);
   };
 
-  return { root, branch, update };
+  return { root, log, obstacles, update };
 }
 
 function createGround(): THREE.Mesh {
@@ -146,4 +151,13 @@ async function loadStones(topHeight: number): Promise<THREE.Object3D[]> {
     stone.position.set(x, -sink - box.min.y * heightScale, z);
     return stone;
   });
+}
+
+/** Bounding ellipsoid slightly inside the stone's box, so the rope rests on it rather than floating. */
+function toEllipsoid(object: THREE.Object3D): Ellipsoid {
+  const box = new THREE.Box3().setFromObject(object);
+  return {
+    center: box.getCenter(new THREE.Vector3()),
+    radii: box.getSize(new THREE.Vector3()).multiplyScalar(0.46),
+  };
 }

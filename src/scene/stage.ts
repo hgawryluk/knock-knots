@@ -17,7 +17,7 @@ export class Stage {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.toneMapping = THREE.NeutralToneMapping;
     container.appendChild(this.renderer.domElement);
 
@@ -26,6 +26,7 @@ export class Stage {
     this.controls.dampingFactor = 0.08;
     this.controls.enablePan = false;
     this.controls.rotateSpeed = 0.6;
+    this.controls.mouseButtons.RIGHT = THREE.MOUSE.ROTATE;
     this.controls.minDistance = 3.5;
     this.controls.maxDistance = 11;
     this.controls.minPolarAngle = Math.PI * 0.12;
