@@ -85,7 +85,7 @@ body {
   position: absolute;
   top: 16px;
   left: 16px;
-  width: 280px;
+  width: 296px;
   padding: 18px 18px 16px;
   border-radius: 14px;
   background: var(--chip);
@@ -236,9 +236,33 @@ body {
 }
 
 .knot-levels {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 10px;
+  align-items: center;
+  margin: 0 0 14px;
+}
+
+/* Rows share the grid columns so every section’s knots line up; the first row stays clear of Reset. */
+.knot-section {
+  display: contents;
+}
+
+.knot-section:first-child .knot-section-levels {
+  margin-right: 52px;
+}
+
+.knot-section-name {
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.knot-section-levels {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
-  margin: 0 64px 14px 0;
 }
 
 .knot-level {

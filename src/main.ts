@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import './styles.css';
-import { isUnlocked, LEVELS, loadCompleted, saveCompleted } from './knots/levels';
+import { isUnlocked, LEVELS, loadCompleted, saveCompleted, SECTIONS } from './knots/levels';
 import type { KnotDefinition } from './knots/types';
 import { RopeMesh } from './rope/ropeMesh';
 import type { RopeColors } from './rope/ropeTexture';
@@ -91,7 +91,7 @@ const refreshLevels = (): void =>
 
 const prompt = (step: number): void => {
   if (step >= knot.steps.length) {
-    const next = LEVELS.findIndex((_, i) => i > levelIndex && levelState(i) === 'open');
+    const next = LEVELS.findIndex((level, i) => i > levelIndex && level.section === knot.section && levelState(i) === 'open');
     coach.show(`${knot.name} tied!`, next >= 0 ? `Nicely done. ${LEVELS[next].name} is unlocked above.` : 'Nicely done — more knots are on the way.', 'success');
     return;
   }
@@ -189,7 +189,7 @@ const selectLevel = (index: number): void => {
 /** Reset restarts whatever you're doing: the demo, or your tracing. */
 const reset = (): void => (mode === 'watch' ? watch() : tryIt());
 
-const panel = new KnotPanel(ui, LEVELS, selectLevel, reset);
+const panel = new KnotPanel(ui, SECTIONS, LEVELS, selectLevel, reset);
 panel.setKnot(knot);
 refreshLevels();
 

@@ -1,9 +1,9 @@
-import type { KnotDefinition } from '../knots/types';
+import type { KnotDefinition, KnotSection } from '../knots/types';
 
 export type LevelState = 'done' | 'open' | 'locked' | 'soon';
 
 /**
- * Top-left card: a row of numbered levels, then the selected knot's name,
+ * Top-left card: a labelled row of numbered levels per section, then the selected knot's name,
  * live step checklist with the current hint, and a reset button.
  */
 export class KnotPanel {
@@ -18,7 +18,13 @@ export class KnotPanel {
   private completed = -1;
   private announce = true;
 
-  constructor(root: HTMLElement, levels: KnotDefinition[], onSelect: (index: number) => void, onReset: () => void) {
+  constructor(
+    root: HTMLElement,
+    sections: KnotSection[],
+    levels: KnotDefinition[],
+    onSelect: (index: number) => void,
+    onReset: () => void,
+  ) {
     const panel = document.createElement('section');
     panel.className = 'knot-panel';
     panel.innerHTML = `
@@ -31,15 +37,25 @@ export class KnotPanel {
       <button class="knot-reset" type="button" title="Reset rope (R)">Reset</button>
     `;
     const nav = panel.querySelector('.knot-levels')!;
-    this.levelButtons = levels.map((_, index) => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'knot-level';
-      button.textContent = String(index + 1);
-      button.addEventListener('click', () => onSelect(index));
-      nav.appendChild(button);
-      return button;
-    });
+    this.levelButtons = [];
+    for (const section of sections) {
+      const row = document.createElement('div');
+      row.className = 'knot-section';
+      row.innerHTML = `<span class="knot-section-name"></span><div class="knot-section-levels"></div>`;
+      row.querySelector('.knot-section-name')!.textContent = section.name;
+      const buttons = row.querySelector('.knot-section-levels')!;
+      levels.forEach((level, index) => {
+        if (level.section !== section.id) return;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'knot-level';
+        button.textContent = String(buttons.childElementCount + 1);
+        button.addEventListener('click', () => onSelect(index));
+        buttons.appendChild(button);
+        this.levelButtons[index] = button;
+      });
+      nav.appendChild(row);
+    }
     this.type = panel.querySelector('.knot-type')!;
     this.name = panel.querySelector('.knot-name')!;
     this.summary = panel.querySelector('.knot-summary')!;
@@ -54,7 +70,7 @@ export class KnotPanel {
       const state = states[index];
       button.className = `knot-level ${state}${index === selected ? ' selected' : ''}`;
       button.disabled = state === 'locked' || state === 'soon';
-      const note = state === 'soon' ? ' — coming soon' : state === 'locked' ? ' — tie the earlier knots first' : state === 'done' ? ' — tied' : '';
+      const note = state === 'soon' ? ' — coming soon' : state === 'locked' ? ' — tie the earlier knots in this section first' : state === 'done' ? ' — tied' : '';
       button.title = `${levels[index].name}${note}`;
       button.setAttribute('aria-label', button.title);
       button.setAttribute('aria-current', index === selected ? 'true' : 'false');

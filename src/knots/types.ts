@@ -3,7 +3,14 @@ export interface KnotStep {
   hint: string;
 }
 
-export type KnotType = 'Stopper' | 'Loop' | 'Hitch';
+export type KnotType = 'Stopper' | 'Loop' | 'Hitch' | 'Bend';
+
+export type SectionId = 'basic' | 'climbing' | 'survival';
+
+export interface KnotSection {
+  id: SectionId;
+  name: string;
+}
 
 export type Point3 = [number, number, number];
 
@@ -28,6 +35,7 @@ export interface KnotDefinition {
   id: string;
   name: string;
   type: KnotType;
+  section: SectionId;
   summary: string;
   steps: KnotStep[];
   /** Missing while the knot's path hasn't been authored yet. */
