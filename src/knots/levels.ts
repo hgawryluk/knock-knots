@@ -1,5 +1,5 @@
 import { FIGURE_EIGHT_PATH, OVERHAND_PATH } from './paths';
-import type { KnotDefinition, KnotSection } from './types';
+import type { KnotDefinition, KnotSection, KnotType, SectionId } from './types';
 
 export const OVERHAND: KnotDefinition = {
   id: 'overhand',
@@ -19,10 +19,22 @@ export const OVERHAND: KnotDefinition = {
 export const SECTIONS: KnotSection[] = [
   { id: 'basic', name: 'Basic' },
   { id: 'climbing', name: 'Climbing' },
-  { id: 'survival', name: 'Survival' },
 ];
 
-/** Every knot, grouped by section in SECTIONS order and simplest first within each (follows knots3d.com's beginner knots). */
+/** A knot whose path hasn't been authored yet: listed in its section as "coming soon". */
+const soon = (id: string, name: string, type: KnotType, section: SectionId, summary: string): KnotDefinition => ({
+  id,
+  name,
+  type,
+  section,
+  summary,
+  steps: [],
+});
+
+/**
+ * Every knot, grouped by section in SECTIONS order and simplest first within each.
+ * Basic = knots3d.com's "Essential Knots" (names only, our own order and words), plus the overhand they build on.
+ */
 export const LEVELS: KnotDefinition[] = [
   OVERHAND,
   {
@@ -38,17 +50,27 @@ export const LEVELS: KnotDefinition[] = [
     ],
     path: FIGURE_EIGHT_PATH,
   },
-  { id: 'overhand-loop', name: 'Overhand Loop', type: 'Loop', section: 'basic', summary: '', steps: [] },
-  { id: 'two-half-hitches', name: 'Two Half Hitches', type: 'Hitch', section: 'basic', summary: '', steps: [] },
+  soon('square-knot', 'Square Knot', 'Binding', 'basic', 'Ties two ends round a bundle. Never use it to join ropes that take a load.'),
+  soon('overhand-noose', 'Simple Overhand Noose', 'Loop', 'basic', 'A sliding loop that closes when the rope is pulled.'),
+  soon('clove-hitch', 'Clove Hitch', 'Hitch', 'basic', 'Quick, adjustable hitch to fix a rope to a log, post or rail.'),
+  soon('round-turn-two-half-hitches', 'Round Turn & Two Half Hitches', 'Hitch', 'basic', 'A strong, easy-to-untie tie-off to a post, ring or log.'),
+  soon('figure-eight-loop', 'Figure-Eight Loop', 'Loop', 'basic', 'A fixed loop at the end of the rope that won’t slip.'),
+  soon('bowline', 'Bowline', 'Loop', 'basic', 'A fixed loop that holds under load and still unties easily afterwards.'),
+  soon('sheet-bend', 'Sheet Bend', 'Bend', 'basic', 'Joins two ropes, even when one is thicker than the other.'),
+  soon('timber-hitch', 'Timber Hitch', 'Hitch', 'basic', 'Grips a log by twisting round itself — for dragging timber or starting a lashing.'),
+  soon('constrictor-knot', 'Constrictor Knot', 'Binding', 'basic', 'A binding that clamps down hard, for closing a bag or holding things together.'),
+  soon('anchor-hitch', 'Anchor Hitch', 'Hitch', 'basic', 'A secure way to tie a rope to a ring, anchor or post.'),
+  soon('double-fishermans', 'Double Fisherman’s Knot', 'Bend', 'basic', 'Joins two ropes of similar size for good, as climbers do for slings.'),
+  soon('alpine-butterfly', 'Alpine Butterfly', 'Loop', 'basic', 'A fixed loop in the middle of the rope that can be loaded any way.'),
+  soon('zeppelin-bend', 'Zeppelin Bend', 'Bend', 'basic', 'Joins two ropes and stays easy to untie even after heavy strain.'),
+  soon('midshipmans-hitch', 'Midshipman’s Hitch', 'Hitch', 'basic', 'A friction hitch you can slide to tighten a line under tension.'),
+  soon('adjustable-grip-hitch', 'Adjustable Grip Hitch', 'Hitch', 'basic', 'Slides to adjust a line, then grips when loaded — ideal for tent guylines.'),
+  soon('prusik', 'Prusik', 'Hitch', 'basic', 'A loop wrapped round a rope that grips under load and slides when free.'),
+  soon('truckers-hitch', 'Trucker’s Hitch', 'Hitch', 'basic', 'A built-in pulley that lets you pull a line really tight and tie it off.'),
+  soon('autolocking-truckers-hitch', 'Autolocking Trucker’s Hitch', 'Hitch', 'basic', 'A trucker’s hitch that holds the tension by itself while you tie off.'),
 
-  { id: 'figure-eight-loop', name: 'Figure-Eight Loop', type: 'Loop', section: 'climbing', summary: '', steps: [] },
-  { id: 'figure-eight-follow-through', name: 'Figure-Eight Follow-Through', type: 'Loop', section: 'climbing', summary: '', steps: [] },
-  { id: 'clove-hitch', name: 'Clove Hitch', type: 'Hitch', section: 'climbing', summary: 'Quick, adjustable hitch to fix a rope to a log, post or carabiner.', steps: [] },
-  { id: 'munter-hitch', name: 'Munter Hitch', type: 'Hitch', section: 'climbing', summary: '', steps: [] },
-
-  { id: 'bowline', name: 'Bowline', type: 'Loop', section: 'survival', summary: '', steps: [] },
-  { id: 'timber-hitch', name: 'Timber Hitch', type: 'Hitch', section: 'survival', summary: '', steps: [] },
-  { id: 'taut-line-hitch', name: 'Taut-Line Hitch', type: 'Hitch', section: 'survival', summary: '', steps: [] },
+  soon('figure-eight-follow-through', 'Figure-Eight Follow-Through', 'Loop', 'climbing', 'The climber’s tie-in: a figure-eight loop threaded through the harness.'),
+  soon('munter-hitch', 'Munter Hitch', 'Hitch', 'climbing', 'Belay or lower someone using just a carabiner and friction.'),
 ];
 
 const STORAGE_KEY = 'knots.completed';

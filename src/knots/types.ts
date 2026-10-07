@@ -3,9 +3,9 @@ export interface KnotStep {
   hint: string;
 }
 
-export type KnotType = 'Stopper' | 'Loop' | 'Hitch' | 'Bend';
+export type KnotType = 'Stopper' | 'Loop' | 'Hitch' | 'Bend' | 'Binding';
 
-export type SectionId = 'basic' | 'climbing' | 'survival';
+export type SectionId = 'basic' | 'climbing';
 
 export interface KnotSection {
   id: SectionId;

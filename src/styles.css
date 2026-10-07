@@ -235,24 +235,17 @@ body {
   }
 }
 
+/* Each section: its name (level with Reset) over a full-width row of numbered knots. */
 .knot-levels {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 6px 10px;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   margin: 0 0 14px;
 }
 
-/* Rows share the grid columns so every section’s knots line up; the first row stays clear of Reset. */
-.knot-section {
-  display: contents;
-}
-
-.knot-section:first-child .knot-section-levels {
-  margin-right: 52px;
-}
-
 .knot-section-name {
+  display: block;
+  margin: 2px 0 8px;
   font-size: 10.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
