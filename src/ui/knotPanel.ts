@@ -17,6 +17,7 @@ export class KnotPanel {
   private items: HTMLLIElement[] = [];
   private knot: KnotDefinition | null = null;
   private completed = -1;
+  private announce = true;
 
   constructor(root: HTMLElement, levels: Level[], onSelect: (index: number) => void, onReset: () => void) {
     const panel = document.createElement('section');
@@ -79,14 +80,16 @@ export class KnotPanel {
     this.setProgress(0);
   }
 
-  setProgress(completed: number): void {
-    if (!this.knot || completed === this.completed) return;
+  /** `announce` = false while a demo plays: steps tick along, but no "tied!" message. */
+  setProgress(completed: number, announce = true): void {
+    if (!this.knot || (completed === this.completed && announce === this.announce)) return;
     this.completed = completed;
+    this.announce = announce;
     this.items.forEach((li, i) => {
       li.classList.toggle('done', i < completed);
       li.classList.toggle('current', i === completed);
     });
-    const tied = completed >= this.knot.steps.length;
+    const tied = announce && completed >= this.knot.steps.length;
     this.status.textContent = tied ? `${this.knot.name} tied!` : '';
     this.status.classList.toggle('visible', tied);
   }

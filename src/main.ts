@@ -1,18 +1,26 @@
 import * as THREE from 'three';
 import './styles.css';
+import { createMouse } from './demo/mouse';
+import { recordDemo, type DemoRecording } from './demo/recorder';
+import { DEMO_SCRIPTS } from './demo/scripts';
 import { isUnlocked, LEVELS, loadCompleted, saveCompleted } from './knots/levels';
 import type { KnotContext, KnotDefinition, KnotSetup } from './knots/types';
 import { RopeDragger } from './rope/ropeDragger';
 import { RopeMesh } from './rope/ropeMesh';
+import type { RopeColors } from './rope/ropeTexture';
 import { layRope, RopeSim } from './rope/ropeSim';
 import { createMeadow } from './scene/meadow';
 import { Stage } from './scene/stage';
+import { Coach } from './ui/coach';
+import { DemoBar } from './ui/demoBar';
 import { KnotPanel, type LevelState } from './ui/knotPanel';
 import { createOverlay } from './ui/overlay';
 
 const ROPE_RADIUS = 0.06;
 const ROPE_SPACING = 0.05;
 const ROPE_LENGTH = 9.4;
+const ROPE_COLORS: RopeColors = { strand: '#ffcf4a', groove: '#b07a12' };
+const WORKING_END_COLOR = '#2f7cf6';
 const ANALYSIS_INTERVAL = 0.12;
 
 const onGround = (points: number[][]): THREE.Vector3[] => points.map(([x, z]) => new THREE.Vector3(x, ROPE_RADIUS, z));
@@ -33,7 +41,7 @@ const START_PATHS: Record<KnotSetup, THREE.Vector3[]> = {
 };
 
 const VIEWS: Record<KnotSetup, { target: THREE.Vector3; distance: number; polar: number; azimuth: number }> = {
-  grass: { target: new THREE.Vector3(0.6, 0.2, 3.9), distance: 9, polar: Math.PI * 0.27, azimuth: 0.15 },
+  grass: { target: new THREE.Vector3(0.6, 0.2, 4.5), distance: 9.5, polar: Math.PI * 0.27, azimuth: 0.15 },
   log: { target: new THREE.Vector3(0, 0.3, 0.6), distance: 9.5, polar: Math.PI * 0.3, azimuth: 0.35 },
 };
 
@@ -66,10 +74,11 @@ const sim = new RopeSim(startPoints(), ROPE_SPACING, ROPE_RADIUS, {
   groundY: 0,
 });
 sim.pin(0);
-sim.groundGrip = knot.setup === 'grass' ? 1 : 0;
 
-const ropeMesh = new RopeMesh(sim.count, ROPE_RADIUS, { strand: '#ffcf4a', groove: '#b07a12' }, '#2f7cf6');
-stage.scene.add(ropeMesh.object);
+const ropeMesh = new RopeMesh(sim.count, ROPE_RADIUS, ROPE_COLORS, WORKING_END_COLOR);
+const demoMesh = new RopeMesh(sim.count, ROPE_RADIUS, ROPE_COLORS, WORKING_END_COLOR);
+demoMesh.object.visible = false;
+stage.scene.add(ropeMesh.object, demoMesh.object);
 const dragger = new RopeDragger(sim, meadow.log, stage.camera, container, stage.controls, stage.scene);
 
 const knotContext = (): KnotContext => ({ positions: sim.positions, count: sim.count, ropeRadius: ROPE_RADIUS, log: meadow.log });
@@ -78,13 +87,18 @@ const resetView = (): void => {
   stage.setView(view.target, view.distance, view.polar, view.azimuth);
 };
 
-// ---- UI and progress ----------------------------------------------------------------------
+// ---- UI -----------------------------------------------------------------------------------
 
 const ui = document.getElementById('ui')!;
 createOverlay(ui);
+const coach = new Coach(ui);
 
+/** "watch": the recorded demo plays on its own rope. "try": your rope, with step prompts. */
+let mode: 'watch' | 'try' = 'try';
 /** Once tied, the knot is set and stays counted as tied until the rope is reset. */
 let tied = false;
+/** Steps done at the last check, to notice progress and prompt the next step. */
+let lastDone = -1;
 
 const refreshLevels = (): void =>
   panel.setLevels(
@@ -93,8 +107,19 @@ const refreshLevels = (): void =>
     levelIndex,
   );
 
+const prompt = (done: number): void => {
+  if (done >= knot.steps.length) {
+    const next = LEVELS.findIndex((_, i) => i > levelIndex && levelState(i) === 'open');
+    coach.show(`${knot.name} tied!`, next >= 0 ? `Nicely done. ${LEVELS[next].name} is unlocked above.` : 'Nicely done.', 'success');
+    return;
+  }
+  const step = knot.steps[done];
+  const praise = done > lastDone && lastDone >= 0 ? 'Nice! ' : '';
+  coach.show(`${praise}Step ${done + 1} of ${knot.steps.length} · ${step.title}`, step.hint);
+};
+
 const updateProgress = (): void => {
-  if (tied) return;
+  if (tied || mode !== 'try') return;
   const done = knot.evaluate(knotContext());
   tied = done >= knot.steps.length;
   sim.knotSet = tied;
@@ -104,6 +129,10 @@ const updateProgress = (): void => {
     saveCompleted(completed);
     refreshLevels();
   }
+  if (done !== lastDone) {
+    prompt(done);
+    lastDone = done;
+  }
 };
 
 const resetRope = (): void => {
@@ -111,9 +140,76 @@ const resetRope = (): void => {
   sim.reset(startPoints());
   sim.groundGrip = knot.setup === 'grass' ? 1 : 0;
   tied = false;
+  lastDone = -1;
   resetView();
   updateProgress();
 };
+
+// ---- Demo ---------------------------------------------------------------------------------
+
+const recordings = new Map<string, DemoRecording>();
+const demoMouse = (step: () => void) => createMouse(stage.renderer.domElement, stage.camera, step);
+
+/**
+ * The demo for a knot: its script tied once on the live rope through the real
+ * controls (faster than real time) and recorded. Cached per knot.
+ */
+const recordingFor = (k: KnotDefinition): DemoRecording | null => {
+  const script = DEMO_SCRIPTS[k.id];
+  if (!script) return null;
+  const cached = recordings.get(k.id);
+  if (cached) return cached;
+  dragger.enabled = true;
+  resetRope();
+  const recording = recordDemo(
+    script,
+    { sim, log: meadow.log, ropeRadius: ROPE_RADIUS },
+    demoMouse,
+    () => k.evaluate(knotContext()) >= k.steps.length,
+  );
+  dragger.cancel();
+  recordings.set(k.id, recording);
+  return recording;
+};
+
+const tryIt = (): void => {
+  mode = 'try';
+  demoMesh.object.visible = false;
+  ropeMesh.object.visible = true;
+  dragger.enabled = true;
+  demoBar.showTry(!!DEMO_SCRIPTS[knot.id]);
+  resetRope();
+};
+
+const watch = (): void => {
+  const recording = recordingFor(knot);
+  if (!recording) {
+    tryIt();
+    return;
+  }
+  mode = 'watch';
+  resetRope();
+  dragger.cancel();
+  dragger.enabled = false;
+  dragger.update(); // hides the hover ring
+  ropeMesh.object.visible = false;
+  demoMesh.object.visible = true;
+  coach.hide();
+  demoBar.showWatch(
+    recording,
+    knot.steps.map((step) => step.title),
+  );
+};
+
+const demoBar = new DemoBar(ui, {
+  onTry: tryIt,
+  onWatch: watch,
+  onFrame(frame, step) {
+    const recording = recordings.get(knot.id);
+    if (recording) demoMesh.update(recording.frames[frame]);
+    panel.setProgress(step, false);
+  },
+});
 
 const selectLevel = (index: number, force = false): void => {
   const next = LEVELS[index].knot;
@@ -122,21 +218,28 @@ const selectLevel = (index: number, force = false): void => {
   knot = next;
   panel.setKnot(knot);
   refreshLevels();
-  resetRope();
+  watch();
 };
 
-const panel = new KnotPanel(ui, LEVELS, (index) => selectLevel(index), resetRope);
+/** Reset restarts whatever you're doing: the demo, or your rope. */
+const reset = (): void => (mode === 'watch' ? watch() : resetRope());
+
+const panel = new KnotPanel(ui, LEVELS, (index) => selectLevel(index), reset);
 panel.setKnot(knot);
 refreshLevels();
 
 window.addEventListener('keydown', (event) => {
-  if ((event.key === 'r' || event.key === 'R') && !event.repeat && !(event.target instanceof HTMLInputElement)) resetRope();
+  if ((event.key === 'r' || event.key === 'R') && !event.repeat && !(event.target instanceof HTMLInputElement)) reset();
 });
 
 let sinceAnalysis = 0;
 /** Dev tests drive the simulation themselves; the frame loop then only renders. */
 let simPaused = false;
 stage.onUpdate((dt) => {
+  if (mode === 'watch') {
+    demoBar.update(dt);
+    return;
+  }
   if (!simPaused) sim.step(dt);
   ropeMesh.update(sim.positions);
   dragger.update();
@@ -149,82 +252,54 @@ stage.onUpdate((dt) => {
 });
 
 if (import.meta.env.DEV) {
-  const { sampleAroundLog, surfaceCrossings, windingBetween } = await import('./knots/logAnalysis');
   const { analyzeFreeKnot } = await import('./knots/freeKnot');
-  const { createMouse } = await import('./dev/mouse');
-  const { mouseClove } = await import('./dev/mouseClove');
-  const { mouseOverhand } = await import('./dev/mouseOverhand');
+  const { createEndDrag } = await import('./demo/drag');
   const { createRopeBeads } = await import('./dev/ropeBeads');
   const beads = createRopeBeads(sim);
   beads.object.visible = false;
   stage.scene.add(beads.object);
   stage.onUpdate(beads.update);
-  const mouse = createMouse(stage.renderer.domElement, stage.camera, () => sim.step(1 / 60));
   const evaluate = (): number => knot.evaluate(knotContext());
-  const cloveLevel = LEVELS.findIndex((level) => level.knot?.id === 'clove-hitch');
+
+  /** Regression: tie a knot's demo script on your own rope (try mode) and log the checker after each move. */
+  const runScript = (id: string): string[] => {
+    const index = LEVELS.findIndex((level) => level.knot?.id === id);
+    simPaused = true;
+    levelIndex = index;
+    knot = LEVELS[index].knot!;
+    panel.setKnot(knot);
+    tryIt();
+    const lines: string[] = [];
+    const drag = createEndDrag(sim, demoMouse(() => sim.step(1 / 60)), {
+      afterDrag(label) {
+        updateProgress();
+        lines.push(`${label}: tied=${tied} completed=${evaluate()}`);
+      },
+    });
+    DEMO_SCRIPTS[id].run(drag, { sim, log: meadow.log, ropeRadius: ROPE_RADIUS });
+    simPaused = false;
+    return lines;
+  };
 
   Object.assign(window, {
     __knots: {
       sim,
       stage,
       meadow,
-      mouse,
       evaluate,
       reset: resetRope,
       select: (index: number) => selectLevel(index, true),
       freeKnot: () => analyzeFreeKnot(sim.positions, sim.count),
-      /** Ties a clove hitch through the real mouse path with the sim driven synchronously. */
-      mouseClove: (stopAfter?: string) => {
-        simPaused = true;
-        selectLevel(cloveLevel, true);
-        const status = (): string => {
-          updateProgress();
-          const samples = sampleAroundLog(sim.positions, sim.count, meadow.log, ROPE_RADIUS);
-          return `tied=${tied} completed=${evaluate()} turns=${windingBetween(samples, 0, sim.count - 1).toFixed(2)} crossings=${surfaceCrossings(samples).length}`;
-        };
-        // Like a person eyeing the X: slide the end along the standing part, one rope width to
-        // the side the end hangs on, pressed to the bark (Shift), under the X and a little past it.
-        const tuckPath = (): [number, number, number][] | null => {
-          const samples = sampleAroundLog(sim.positions, sim.count, meadow.log, ROPE_RADIUS);
-          const crossing = surfaceCrossings(samples).find((c) => c.over === c.b);
-          if (!crossing) return null;
-          const p = sim.positions;
-          const side = Math.sign(p[(sim.count - 1) * 3] - p[crossing.a * 3]) || 1;
-          const path: [number, number, number][] = [];
-          for (let i = crossing.a - 12; i <= crossing.a + 8; i += 4) {
-            const x = p[i * 3] + side * ROPE_RADIUS * 2.2;
-            const s = meadow.log.sectionAt(x);
-            const angle = Math.atan2((p[i * 3 + 2] - s.cz) / s.rz, (p[i * 3 + 1] - s.cy) / s.ry);
-            path.push([x, s.cy + Math.cos(angle) * (s.ry + ROPE_RADIUS), s.cz + Math.sin(angle) * (s.rz + ROPE_RADIUS)]);
-          }
-          return path;
-        };
-        const log = mouseClove(sim, mouse, status, tuckPath, stopAfter);
-        updateProgress();
-        simPaused = false;
-        return log;
-      },
-      /** Ties an overhand knot on the grass through the real mouse path. */
-      mouseOverhand: (stopAfter?: string) => {
-        simPaused = true;
-        selectLevel(LEVELS.findIndex((level) => level.knot?.id === 'overhand'), true);
-        const status = (): string => {
-          updateProgress();
-          const info = analyzeFreeKnot(sim.positions, sim.count);
-          return `tied=${tied} completed=${evaluate()} crossings=${info.crossings} det=${info.determinant}`;
-        };
-        const log = mouseOverhand(sim, mouse, status, stopAfter);
-        updateProgress();
-        simPaused = false;
-        return log;
-      },
+      runScript,
+      mouseOverhand: () => runScript('overhand'),
+      mouseClove: () => runScript('clove-hitch'),
+      recording: () => recordings.get(knot.id),
+      mode: () => mode,
       pause: (paused: boolean) => (simPaused = paused),
-      /** Re-runs the knot checker now and updates the panel. */
-      check: updateProgress,
       beads: (on = true) => (beads.object.visible = on),
       /** Renders a frame and saves it to .shots/<name>.png via the dev server. */
       shot: async (name = 'shot') => {
-        ropeMesh.update(sim.positions);
+        if (mode === 'try') ropeMesh.update(sim.positions);
         beads.update();
         stage.renderer.render(stage.scene, stage.camera);
         const url = stage.renderer.domElement.toDataURL('image/png');
@@ -235,5 +310,6 @@ if (import.meta.env.DEV) {
   });
 }
 
-resetView();
+// Open on the current knot's demo (or straight into "try" if it has none).
+watch();
 requestAnimationFrame(() => document.getElementById('fade')!.classList.add('hidden'));

@@ -1,13 +1,14 @@
 import * as THREE from 'three';
 
 /**
- * Dev-only synthetic mouse: dispatches real pointer events so tests go through
- * the same input path as a person (picking, drag targeting, orbit fallthrough).
- * Time advances by calling `step` once per simulated frame, not with timers,
- * so tests behave the same when the page is hidden or throttled.
+ * Synthetic mouse for demos and tests: dispatches real pointer events so a
+ * scripted tie goes through the same input path as a person (picking, drag
+ * targeting, Shift for "under"). Time advances by calling `step` once per
+ * simulated frame, not with timers, so it runs as fast as the CPU allows and
+ * behaves the same when the page is hidden.
  */
 export function createMouse(canvas: HTMLCanvasElement, camera: THREE.Camera, step: () => void) {
-  const fire = (type: string, x: number, y: number, target: EventTarget, shift = false): void => {
+  const fire = (type: string, x: number, y: number, target: EventTarget): void => {
     target.dispatchEvent(
       new PointerEvent(type, {
         bubbles: true,
@@ -18,12 +19,8 @@ export function createMouse(canvas: HTMLCanvasElement, camera: THREE.Camera, ste
         pointerType: 'mouse',
         button: 0,
         buttons: type === 'pointerup' ? 0 : 1,
-        shiftKey: shift,
       }),
     );
-  };
-  const frames = (count: number): void => {
-    for (let i = 0; i < count; i++) step();
   };
 
   return {
@@ -54,7 +51,9 @@ export function createMouse(canvas: HTMLCanvasElement, camera: THREE.Camera, ste
     },
     /** Advances the simulation by `ms` without moving the mouse. */
     wait(ms: number): void {
-      frames(Math.round(ms / 16));
+      for (let i = 0, n = Math.round(ms / 16); i < n; i++) step();
     },
   };
 }
+
+export type Mouse = ReturnType<typeof createMouse>;

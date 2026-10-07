@@ -43,6 +43,8 @@ export class RopeDragger {
   private pointerId = -1;
   private hovered = -1;
   private lift = DEFAULT_LIFT;
+  /** Off while a demo plays: presses then go straight to the camera controls. */
+  enabled = true;
 
   constructor(
     private readonly sim: RopeSim,
@@ -294,7 +296,7 @@ export class RopeDragger {
   };
 
   private onPointerDown = (event: PointerEvent): void => {
-    if (event.button !== 0 || this.dragging) return;
+    if (!this.enabled || event.button !== 0 || this.dragging) return;
     const index = this.pick(event);
     if (index < 0) return;
 
@@ -321,7 +323,7 @@ export class RopeDragger {
       this.updateTarget();
       return;
     }
-    if (event.buttons !== 0) return;
+    if (event.buttons !== 0 || !this.enabled) return;
     this.hovered = this.pick(event);
     this.surface.style.cursor = this.hovered >= 0 ? 'grab' : '';
   };
