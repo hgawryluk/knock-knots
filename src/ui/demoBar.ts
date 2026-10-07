@@ -11,7 +11,7 @@ export interface DemoBarHandlers {
   onTry: () => void;
   /** Go back to the demo from "try it yourself". */
   onWatch: () => void;
-  /** Show this frame of the demo. */
+  /** Show this (possibly fractional) frame of the demo. */
   onFrame: (frame: number, step: number) => void;
 }
 
@@ -134,6 +134,9 @@ export class DemoBar {
       return;
     }
     if (frame !== this.frame) this.seek(frame);
+    // Between whole frames, keep the picture moving smoothly.
+    const exact = this.time * this.recording.fps;
+    this.handlers.onFrame(exact, this.stepAt(frame));
   }
 
   private stepAt(frame: number): number {

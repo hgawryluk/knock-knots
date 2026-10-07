@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { createRopeTextures, type RopeColors } from './ropeTexture';
 
 const SUBDIVISIONS = 3;
-const RADIAL = 12;
+const RADIAL = 18;
 
 /**
  * Tube skinned over the simulated particles every frame. Geometry is

@@ -8,6 +8,8 @@ const GRAB_PX = 44;
 const LOOK_AHEAD = 40;
 const LOOK_BACK = 25;
 const FOLLOW_PX = 80;
+/** How quickly the drawn rope catches up with your cursor (per second). */
+const GLIDE_RATE = 16;
 /** Sample spacing of the ghost tubes. */
 const GHOST_STRIDE = 6;
 
@@ -20,11 +22,13 @@ const GHOST_STRIDE = 6;
  */
 export class Tracer {
   readonly object = new THREE.Group();
-  /** Current position along the path (sample index). */
+  /** Where you've traced to along the path (sample index). */
   progress = 0;
+  /** What's drawn: eases after `progress` so the rope glides instead of jumping with the cursor. */
+  shown = 0;
   enabled = false;
-  /** Called whenever progress changes. */
-  onProgress: (progress: number) => void = () => {};
+  /** Called whenever the drawn position along the path changes. */
+  onProgress: (shown: number) => void = () => {};
 
   private path: RopePath | null = null;
   private stepEnd = 0;
@@ -67,6 +71,8 @@ export class Tracer {
   start(path: RopePath): void {
     this.path = path;
     this.setProgress(path.traceFrom);
+    this.shown = this.progress;
+    this.onProgress(this.shown);
     this.enabled = true;
     this.object.visible = true;
   }
@@ -81,10 +87,20 @@ export class Tracer {
     return !!this.path && this.progress >= this.path.end - 0.5;
   }
 
+  /** Traced to the end and the drawn rope has caught up. */
+  get settled(): boolean {
+    return this.finished && Math.abs(this.shown - this.progress) < 0.5;
+  }
+
   /** Redraws the ghost (when progress changed) and animates the step ring and tip marker. */
   update(dt: number): void {
     if (!this.path || !this.object.visible) return;
     this.time += dt;
+    if (this.shown !== this.progress) {
+      this.shown += (this.progress - this.shown) * (1 - Math.exp(-dt * GLIDE_RATE));
+      if (Math.abs(this.progress - this.shown) < 0.05) this.shown = this.progress;
+      this.onProgress(this.shown);
+    }
     if (this.dirty) {
       this.dirty = false;
       this.rebuildGhosts(this.path);
@@ -92,7 +108,7 @@ export class Tracer {
     this.ring.quaternion.copy(this.camera.quaternion);
     this.ring.scale.setScalar(1 + Math.sin(this.time * 5) * 0.12);
     this.ring.visible = !this.finished;
-    this.path.pointAt(this.progress, 0, this.tip.position);
+    this.path.pointAt(this.shown, 0, this.tip.position);
     this.tip.quaternion.copy(this.camera.quaternion);
     this.tip.visible = !this.finished;
     this.tip.material.opacity = this.tracing >= 0 ? 0.95 : 0.55 + Math.sin(this.time * 4) * 0.25;
@@ -105,7 +121,6 @@ export class Tracer {
     this.progress = clamped;
     this.stepEnd = this.path.stepEnds.find((end) => end > this.progress + 0.5) ?? this.path.end;
     this.dirty = true;
-    this.onProgress(this.progress);
   }
 
   private rebuildGhosts(path: RopePath): void {

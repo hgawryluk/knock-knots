@@ -15,7 +15,7 @@ import { createOverlay } from './ui/overlay';
 
 const ROPE_RADIUS = 0.033;
 /** Points the rope tube is drawn through (spread over however much rope is out). */
-const ROPE_POINTS = 180;
+const ROPE_POINTS = 320;
 const ROPE_COLORS: RopeColors = { strand: '#ffcf4a', groove: '#b07a12' };
 const WORKING_END_COLOR = '#2f7cf6';
 /** Demo pacing: path samples drawn per second, then the pull-tight and a short rest. */
@@ -33,7 +33,7 @@ stage.onUpdate(meadow.update);
 // Free orbit all the way round the hanging knot, from just below eye level to well above.
 Object.assign(stage.controls, { minDistance: 1.4, maxDistance: 7, minPolarAngle: Math.PI * 0.08, maxPolarAngle: Math.PI * 0.6 });
 const KNOT_VIEW = { target: new THREE.Vector3(0.1, 1.3, 1.9), distance: 4.6, polar: Math.PI * 0.46, azimuth: 0.15 };
-const resetView = (): void => stage.setView(KNOT_VIEW.target, KNOT_VIEW.distance, KNOT_VIEW.polar, KNOT_VIEW.azimuth);
+const resetView = (): void => stage.glideTo(KNOT_VIEW);
 
 // ---- Levels -------------------------------------------------------------------------------
 
@@ -99,15 +99,15 @@ const prompt = (step: number): void => {
   coach.show(`${praise}Step ${step + 1} of ${knot.steps.length} · ${knot.steps[step].title}`, knot.steps[step].hint);
 };
 
-tracer.onProgress = (progress) => {
-  drawRope(progress);
-  const step = stepAt(progress);
+tracer.onProgress = (shown) => {
+  drawRope(shown);
+  const step = stepAt(shown);
   panel.setProgress(Math.min(step, knot.steps.length - 1), false);
   if (step !== promptedStep && step < knot.steps.length) {
     promptedStep = step;
     prompt(step);
   }
-  if (tracer.finished && tightening < 0) tightening = 0;
+  if (tracer.settled && tightening < 0) tightening = 0;
 };
 
 const finishTie = (): void => {
@@ -233,7 +233,7 @@ if (import.meta.env.DEV) {
       },
       /** Renders a frame and saves it to .shots/<name>.png via the dev server. */
       shot: async (name = 'shot') => {
-        stage.renderer.render(stage.scene, stage.camera);
+        stage.render();
         await fetch(`/__shot?name=${name}`, { method: 'POST', body: stage.renderer.domElement.toDataURL('image/png') });
         return name;
       },
@@ -241,5 +241,6 @@ if (import.meta.env.DEV) {
   });
 }
 
+stage.setView(KNOT_VIEW);
 watch();
 requestAnimationFrame(() => document.getElementById('fade')!.classList.add('hidden'));
