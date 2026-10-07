@@ -59,7 +59,7 @@ body {
 
 .hint {
   position: absolute;
-  top: 28px;
+  bottom: 18px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -114,7 +114,7 @@ body {
 @keyframes fade-in {
   from {
     opacity: 0;
-    transform: translate(-50%, -6px);
+    transform: translate(-50%, 6px);
   }
 }
 
@@ -258,7 +258,16 @@ body {
   }
 }
 
+@media (max-width: 900px) {
+  .hint-sub {
+    display: none;
+  }
+}
+
 @media (max-width: 720px) {
+  .hint {
+    display: none;
+  }
   .knot-panel {
     top: auto;
     bottom: 56px;

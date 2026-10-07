@@ -20,6 +20,9 @@ const DAMPING = 0.992;
 const MAX_GRAB_STEP = 0.05;
 /** How many particles either side of the hand count as "the end being tucked". */
 const TUCK_REACH = 4;
+/** Minimum distance between particles i and i+2, in segment lengths (2 = straight). */
+const MIN_BEND_SPAN = 1.85;
+const BEND_STIFFNESS = 0.3;
 const GROUND_FRICTION = 0.55;
 /**
  * Per-iteration share of sliding (since the substep began) cancelled for rope on the log.
@@ -27,6 +30,8 @@ const GROUND_FRICTION = 0.55;
  * log) but strongly resists slipping sideways, which keeps turns where you laid them.
  */
 const LOG_SIDE_GRIP = 0.5;
+/** Same idea for rope pressing on rope: without it, crossings slide apart and knots won't hold. */
+const ROPE_GRIP = 0.35;
 const LOG_ALONG_GRIP = 0.08;
 const NO_CONTACT = 0;
 const GROUND_CONTACT = 1;
@@ -141,6 +146,7 @@ export class RopeSim {
     if (this.grabbed < 0) return;
     const p = this.positions;
     const k = this.grabbed * 3;
+    if (this.moveAroundLog(k)) return;
     const dx = this.grabTarget.x - p[k];
     const dy = this.grabTarget.y - p[k + 1];
     const dz = this.grabTarget.z - p[k + 2];
@@ -151,18 +157,55 @@ export class RopeSim {
     p[k + 2] += dz * f;
   }
 
+  /**
+   * If the straight line from the held point to its target would cut through
+   * the log, step around the log's surface instead (the shorter way), so a
+   * target on the far side is reached by wrapping rather than getting stuck.
+   */
+  private moveAroundLog(k: number): boolean {
+    const p = this.positions;
+    const { log } = this.colliders;
+    const t = this.grabTarget;
+    if (p[k] <= log.minX || p[k] >= log.maxX) return false;
+    const s = log.sectionAt(p[k], this.section);
+    const ry = s.ry + this.radius;
+    const rz = s.rz + this.radius;
+    const u0 = (p[k + 1] - s.cy) / ry;
+    const v0 = (p[k + 2] - s.cz) / rz;
+    const u1 = (t.y - s.cy) / ry;
+    const v1 = (t.z - s.cz) / rz;
+    // Closest approach of the segment to the axis, in normalized coordinates.
+    const du = u1 - u0;
+    const dv = v1 - v0;
+    const len2 = du * du + dv * dv;
+    const along = len2 > 1e-9 ? Math.min(Math.max(-(u0 * du + v0 * dv) / len2, 0), 1) : 0;
+    if (Math.hypot(u0 + du * along, v0 + dv * along) >= 0.98) return false;
+
+    const a0 = Math.atan2(v0, u0);
+    let turn = Math.atan2(v1, u1) - a0;
+    turn -= Math.PI * 2 * Math.round(turn / (Math.PI * 2));
+    const maxTurn = MAX_GRAB_STEP / Math.min(ry, rz);
+    const angle = a0 + Math.max(-maxTurn, Math.min(maxTurn, turn));
+    const radius = Math.max(Math.hypot(u0, v0), 1.02);
+    const dx = t.x - p[k];
+    p[k] += Math.max(-MAX_GRAB_STEP, Math.min(MAX_GRAB_STEP, dx));
+    p[k + 1] = s.cy + Math.cos(angle) * radius * ry;
+    p[k + 2] = s.cz + Math.sin(angle) * radius * rz;
+    return true;
+  }
+
   private solveDistances(): void {
     const p = this.positions;
     const rest = this.segmentLength;
     for (let i = 0; i < this.count - 1; i++) {
       this.solvePair(i, i + 1, rest, 1);
     }
-    // Light bending resistance: only resists folding tighter than a rope naturally would.
+    // Bending resistance: keeps a minimum bend radius (~2 rope diameters) so rope curves instead of kinking.
     for (let i = 0; i < this.count - 2; i++) {
       const a = i * 3;
       const b = (i + 2) * 3;
       const d = Math.hypot(p[b] - p[a], p[b + 1] - p[a + 1], p[b + 2] - p[a + 2]);
-      if (d < rest * 1.4) this.solvePair(i, i + 2, rest * 1.4, 0.15);
+      if (d < rest * MIN_BEND_SPAN) this.solvePair(i, i + 2, rest * MIN_BEND_SPAN, BEND_STIFFNESS);
     }
   }
 
@@ -246,6 +289,32 @@ export class RopeSim {
     p[b] -= dx * c * wj;
     p[b + 1] -= dy * c * wj;
     p[b + 2] -= dz * c * wj;
+    this.applyRopeFriction(i, j, dx / d, dy / d, dz / d, wi, wj);
+  }
+
+  /**
+   * Rope-on-rope friction for a touching pair: cancels part of their relative
+   * sliding (since the substep began) across the contact, so crossings stay put.
+   */
+  private applyRopeFriction(i: number, j: number, nx: number, ny: number, nz: number, wi: number, wj: number): void {
+    const p = this.positions;
+    const q = this.previous;
+    const a = i * 3;
+    const b = j * 3;
+    let rx = p[a] - q[a] - (p[b] - q[b]);
+    let ry = p[a + 1] - q[a + 1] - (p[b + 1] - q[b + 1]);
+    let rz = p[a + 2] - q[a + 2] - (p[b + 2] - q[b + 2]);
+    const rn = rx * nx + ry * ny + rz * nz;
+    rx = (rx - rn * nx) * ROPE_GRIP;
+    ry = (ry - rn * ny) * ROPE_GRIP;
+    rz = (rz - rn * nz) * ROPE_GRIP;
+    const w = wi + wj;
+    p[a] -= (rx * wi) / w;
+    p[a + 1] -= (ry * wi) / w;
+    p[a + 2] -= (rz * wi) / w;
+    p[b] += (rx * wj) / w;
+    p[b + 1] += (ry * wj) / w;
+    p[b + 2] += (rz * wj) / w;
   }
 
   /** Pushes particle `i` outward from the log by the overlap; false if it isn't on the log. */
