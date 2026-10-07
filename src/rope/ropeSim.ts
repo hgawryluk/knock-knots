@@ -31,7 +31,11 @@ const GROUND_FRICTION = 0.55;
  */
 const LOG_SIDE_GRIP = 0.5;
 /** Same idea for rope pressing on rope: without it, crossings slide apart and knots won't hold. */
-const ROPE_GRIP = 0.35;
+const ROPE_GRIP = 0.7;
+/** Near-static sideways grip for turns pinned in place while the end is being worked (see isHeldInPlace). */
+const HELD_GRIP = 0.95;
+/** Rope this many particles behind the hand (≈1 unit) counts as already laid. */
+const HELD_BEHIND_HAND = 20;
 const LOG_ALONG_GRIP = 0.08;
 const NO_CONTACT = 0;
 const GROUND_CONTACT = 1;
@@ -55,6 +59,8 @@ export class RopeSim {
    * the log instead of being pushed aside, so the end slips underneath it.
    */
   tuckUnder = false;
+  /** A finished knot is "set" (snugged tight): rope on the log and on itself grips firmly until reset. */
+  knotSet = false;
   private readonly grabTarget = new THREE.Vector3();
 
   constructor(
@@ -76,6 +82,7 @@ export class RopeSim {
     points.forEach((p, i) => p.toArray(this.positions, i * 3));
     this.previous.set(this.positions);
     this.release();
+    this.knotSet = false;
   }
 
   /** Fixes a particle in place (e.g. the standing end tied off out of view). */
@@ -305,9 +312,10 @@ export class RopeSim {
     let ry = p[a + 1] - q[a + 1] - (p[b + 1] - q[b + 1]);
     let rz = p[a + 2] - q[a + 2] - (p[b + 2] - q[b + 2]);
     const rn = rx * nx + ry * ny + rz * nz;
-    rx = (rx - rn * nx) * ROPE_GRIP;
-    ry = (ry - rn * ny) * ROPE_GRIP;
-    rz = (rz - rn * nz) * ROPE_GRIP;
+    const grip = this.knotSet ? HELD_GRIP : ROPE_GRIP;
+    rx = (rx - rn * nx) * grip;
+    ry = (ry - rn * ny) * grip;
+    rz = (rz - rn * nz) * grip;
     const w = wi + wj;
     p[a] -= (rx * wi) / w;
     p[a + 1] -= (ry * wi) / w;
@@ -360,8 +368,8 @@ export class RopeSim {
             p[k + 1] = s.cy + dy / q;
             p[k + 2] = s.cz + dz / q;
           }
-          if (i !== this.grabbed) this.applyLogFriction(i, s.cy, s.cz, ry, rz);
           this.contact[i] = LOG_CONTACT;
+          if (i !== this.grabbed) this.applyLogFriction(i, s.cy, s.cz, ry, rz);
         }
       }
 
@@ -429,9 +437,21 @@ export class RopeSim {
     const sx = dx - along * tx;
     const sy = dy - along * ty;
     const sz = dz - along * tz;
-    p[k] -= sx * LOG_SIDE_GRIP + along * tx * LOG_ALONG_GRIP;
-    p[k + 1] -= sy * LOG_SIDE_GRIP + along * ty * LOG_ALONG_GRIP;
-    p[k + 2] -= sz * LOG_SIDE_GRIP + along * tz * LOG_ALONG_GRIP;
+    const side = this.knotSet || this.isHeldInPlace(i) ? HELD_GRIP : LOG_SIDE_GRIP;
+    const lengthwise = this.knotSet ? HELD_GRIP : LOG_ALONG_GRIP;
+    p[k] -= sx * side + along * tx * lengthwise;
+    p[k + 1] -= sy * side + along * ty * lengthwise;
+    p[k + 2] -= sz * side + along * tz * lengthwise;
+  }
+
+  /**
+   * While you're holding the rope, turns already laid on the log well behind
+   * your hand don't slip sideways — as if your other hand were pinning them —
+   * so working the end doesn't drag the hitch out of shape. Rope can still
+   * slide lengthwise through them. Released rope behaves normally.
+   */
+  private isHeldInPlace(i: number): boolean {
+    return this.grabbed >= 0 && this.grabbed - i > HELD_BEHIND_HAND && this.contact[i] === LOG_CONTACT;
   }
 
   /** Removes part of the sliding motion of particles resting on the ground. */
