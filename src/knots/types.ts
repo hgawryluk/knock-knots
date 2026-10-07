@@ -29,6 +29,16 @@ export interface KnotPath {
   /** Control points where the knot itself begins (on the standing part) and ends (where the tail hangs free) — the part that pulls tight. */
   knotFrom: number;
   tailFrom: number;
+  /** Control points of a stretch inside the knot that keeps its shape when pulled tight (e.g. a ring round a bundle). */
+  hold?: [number, number];
+  /** A pole lying along x that the knot is tied round (world units), shown as a camp rail. */
+  rail?: Rail;
+}
+
+export interface Rail {
+  y: number;
+  z: number;
+  radius: number;
 }
 
 export interface KnotDefinition {

@@ -35,7 +35,8 @@ export class RopePath {
     this.traceFrom = sampleOf(path.traceFrom);
     this.stepEnds = path.stepEnds.map(sampleOf);
 
-    this.tight = tightenKnot(this.loose, SAMPLES, ropeRadius, sampleOf(path.knotFrom), sampleOf(path.tailFrom));
+    const hold = path.hold && ([sampleOf(path.hold[0]), sampleOf(path.hold[1])] as [number, number]);
+    this.tight = tightenKnot(this.loose, SAMPLES, ropeRadius, sampleOf(path.knotFrom), sampleOf(path.tailFrom), hold, path.rail);
   }
 
   /** Last sample index (the working end when fully traced). */

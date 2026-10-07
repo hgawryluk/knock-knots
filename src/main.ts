@@ -5,6 +5,7 @@ import type { KnotDefinition } from './knots/types';
 import { RopeMesh } from './rope/ropeMesh';
 import type { RopeColors } from './rope/ropeTexture';
 import { createMeadow } from './scene/meadow';
+import { CampRail } from './scene/rail';
 import { Stage } from './scene/stage';
 import { RopePath } from './trace/ropePath';
 import { Tracer } from './trace/tracer';
@@ -63,6 +64,11 @@ const drawRope = (upTo: number, tightness = 0): void => {
 
 const tracer = new Tracer(stage.camera, container, stage.controls, ROPE_RADIUS);
 stage.scene.add(tracer.object);
+
+/** The pole hitches are tied round; only there for knots that need it. */
+const rail = new CampRail();
+stage.scene.add(rail.object);
+rail.show(knot.path!.rail);
 
 // ---- UI -----------------------------------------------------------------------------------
 
@@ -180,6 +186,7 @@ const selectLevel = (index: number): void => {
   levelIndex = index;
   knot = LEVELS[index];
   path = new RopePath(knot.path!, ROPE_RADIUS);
+  rail.show(knot.path!.rail);
   timeline = timelineFor();
   panel.setKnot(knot);
   refreshLevels();
@@ -219,6 +226,13 @@ if (import.meta.env.DEV) {
       path: () => path,
       mode: () => mode,
       select: selectLevel,
+      /** Freezes the rope `traced` (0–1) of the way along the traced part, `tightness` (0–1) pulled snug — for shots. */
+      pose: (traced = 1, tightness = 0) => {
+        mode = 'try';
+        tracer.stop();
+        tightening = -1;
+        drawRope(path.traceFrom + (path.end - path.traceFrom) * traced, tightness);
+      },
       /** Checks the authored path really is the knot: crossings and knot determinant as seen from the front. */
       checkPath: () => {
         const n = path.end + 1;

@@ -1,4 +1,4 @@
-import { FIGURE_EIGHT_PATH, OVERHAND_PATH } from './paths';
+import { CLOVE_HITCH_PATH, FIGURE_EIGHT_PATH, OVERHAND_NOOSE_PATH, OVERHAND_PATH, SQUARE_KNOT_PATH } from './paths';
 import type { KnotDefinition, KnotSection, KnotType, SectionId } from './types';
 
 export const OVERHAND: KnotDefinition = {
@@ -50,9 +50,45 @@ export const LEVELS: KnotDefinition[] = [
     ],
     path: FIGURE_EIGHT_PATH,
   },
-  soon('square-knot', 'Square Knot', 'Binding', 'basic', 'Ties two ends round a bundle. Never use it to join ropes that take a load.'),
-  soon('overhand-noose', 'Simple Overhand Noose', 'Loop', 'basic', 'A sliding loop that closes when the rope is pulled.'),
-  soon('clove-hitch', 'Clove Hitch', 'Hitch', 'basic', 'Quick, adjustable hitch to fix a rope to a log, post or rail.'),
+  {
+    id: 'square-knot',
+    name: 'Square Knot',
+    type: 'Binding',
+    section: 'basic',
+    summary: 'Ties two ends round a bundle. Never use it to join ropes that take a load.',
+    steps: [
+      { title: 'Up through the bight', hint: 'Bring the blue end up from the ring, under the curve of the gold bight and over its lower leg.' },
+      { title: 'Round the back', hint: 'Take the end round behind both legs of the bight.' },
+      { title: 'Back beside itself', hint: 'Come over the top leg and out under the curve, alongside where you went in.' },
+    ],
+    path: SQUARE_KNOT_PATH,
+  },
+  {
+    id: 'overhand-noose',
+    name: 'Simple Overhand Noose',
+    type: 'Loop',
+    section: 'basic',
+    summary: 'A sliding loop that closes when the rope is pulled.',
+    steps: [
+      { title: 'Round the rope', hint: 'Bring the blue end up, behind the rope, round its left side and across the front over itself.' },
+      { title: 'Round the back', hint: 'Swing the end out to the right and round behind, into the loop you just made.' },
+      { title: 'Out through the loop', hint: 'Bring the end forward through the loop and out over its top.' },
+    ],
+    path: OVERHAND_NOOSE_PATH,
+  },
+  {
+    id: 'clove-hitch',
+    name: 'Clove Hitch',
+    type: 'Hitch',
+    section: 'basic',
+    summary: 'Quick, adjustable hitch to fix a rope to a pole, post or rail.',
+    steps: [
+      { title: 'Round the rail', hint: 'Take the blue end down the front of the rail, under it, up the back and over the top.' },
+      { title: 'Cross over, round again', hint: 'Come down the front across the rope, then round the rail again beside the first turn.' },
+      { title: 'Tuck under the cross', hint: 'Bring the end over the top and down under the diagonal, so it pins the end.' },
+    ],
+    path: CLOVE_HITCH_PATH,
+  },
   soon('round-turn-two-half-hitches', 'Round Turn & Two Half Hitches', 'Hitch', 'basic', 'A strong, easy-to-untie tie-off to a post, ring or log.'),
   soon('figure-eight-loop', 'Figure-Eight Loop', 'Loop', 'basic', 'A fixed loop at the end of the rope that won’t slip.'),
   soon('bowline', 'Bowline', 'Loop', 'basic', 'A fixed loop that holds under load and still unties easily afterwards.'),
