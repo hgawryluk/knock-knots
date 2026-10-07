@@ -39,3 +39,36 @@ export const OVERHAND_PATH: KnotPath = {
   stepEnds: [7, 11, 15],
   body: [2, 14],
 };
+
+
+/**
+ * Figure-eight knot on a hanging rope, in its familiar "8" shape: a loop below,
+ * the end wraps behind the standing part above it, then comes down over the top
+ * of the loop, through it, and out under its bottom — over, under, over, under.
+ */
+export const FIGURE_EIGHT_PATH: KnotPath = {
+  points: place([
+    [0.3, 3.4, 0], // anchor, above the frame
+    [0.3, 2.4, 0],
+    [0.28, 1.5, -0.02], // ← tracing starts here
+    [0.15, 0.85, 0],
+    [-0.15, 0.6, 0.02],
+    [-0.48, 0.8, 0.05],
+    [-0.5, 1.3, 0.1],
+    [-0.15, 1.62, 0.15],
+    [0.3, 1.7, 0.2], // over the standing part: the loop is made
+    [0.68, 1.75, 0.1],
+    [0.6, 2.05, -0.12],
+    [0.3, 2.0, -0.22], // behind the standing part, above the loop
+    [-0.15, 1.95, -0.1],
+    [-0.2, 1.85, 0.25], // round to the front
+    [-0.12, 1.3, 0.28], // down over the top of the loop…
+    [-0.08, 0.95, -0.05], // …through it…
+    [-0.05, 0.55, -0.22], // …and out under its bottom
+    [-0.03, 0.0, -0.08],
+    [0.0, -0.45, 0.0], // working end hangs down
+  ]),
+  traceFrom: 2,
+  stepEnds: [8, 12, 18],
+  body: [2, 17],
+};

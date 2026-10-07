@@ -1,4 +1,4 @@
-import { OVERHAND_PATH } from './paths';
+import { FIGURE_EIGHT_PATH, OVERHAND_PATH } from './paths';
 import type { KnotDefinition } from './types';
 
 export const OVERHAND: KnotDefinition = {
@@ -22,7 +22,12 @@ export const LEVELS: KnotDefinition[] = [
     name: 'Figure-Eight Knot',
     type: 'Stopper',
     summary: 'A bulkier, more secure stopper that is easier to untie, and the base of the climber’s tie-in.',
-    steps: [],
+    steps: [
+      { title: 'Make a loop', hint: 'Bring the blue end round to form a loop, crossing the rope.' },
+      { title: 'Around the standing part', hint: 'Wrap the end once round the rope above the loop.' },
+      { title: 'Down through the loop', hint: 'Finish by passing the end back through the first loop. You should see an 8.' },
+    ],
+    path: FIGURE_EIGHT_PATH,
   },
   { id: 'overhand-loop', name: 'Overhand Loop', type: 'Loop', summary: '', steps: [] },
   { id: 'figure-eight-loop', name: 'Figure-Eight Loop', type: 'Loop', summary: '', steps: [] },
