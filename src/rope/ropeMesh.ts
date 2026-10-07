@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createRopeTexture, type RopeColors } from './ropeTexture';
+import { createRopeTextures, type RopeColors } from './ropeTexture';
 
 const SUBDIVISIONS = 3;
 const RADIAL = 12;
@@ -40,7 +40,17 @@ export class RopeMesh {
     }
     this.geometry.setIndex(indices);
 
-    const material = new THREE.MeshStandardMaterial({ map: createRopeTexture(colors), roughness: 0.85 });
+    const { map, normalMap } = createRopeTextures(colors);
+    // Braided fibres: matte, with a soft fabric sheen along the strands.
+    const material = new THREE.MeshPhysicalMaterial({
+      map,
+      normalMap,
+      normalScale: new THREE.Vector2(1.2, 1.2),
+      roughness: 0.6,
+      sheen: 0.6,
+      sheenRoughness: 0.45,
+      sheenColor: new THREE.Color('#ffe2a0'),
+    });
     const tube = new THREE.Mesh(this.geometry, material);
     tube.castShadow = tube.receiveShadow = true;
     tube.frustumCulled = false;
@@ -48,10 +58,10 @@ export class RopeMesh {
     const capGeometry = new THREE.SphereGeometry(radius, 20, 12);
     this.startCap = new THREE.Mesh(capGeometry, material);
     this.endCap = new THREE.Mesh(
-      new THREE.SphereGeometry(radius * 1.25, 20, 12),
+      new THREE.SphereGeometry(radius * 1.08, 20, 12),
       new THREE.MeshStandardMaterial({ color: workingEndColor, roughness: 0.5 }),
     );
-    this.endCap.scale.set(1, 1, 1.5);
+    this.endCap.scale.set(1, 1, 1.35);
     for (const cap of [this.startCap, this.endCap]) cap.castShadow = true;
     this.object.add(tube, this.startCap, this.endCap);
   }

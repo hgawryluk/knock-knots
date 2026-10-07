@@ -68,7 +68,7 @@ const sim = new RopeSim(startPoints(), ROPE_SPACING, ROPE_RADIUS, {
 sim.pin(0);
 sim.groundGrip = knot.setup === 'grass' ? 1 : 0;
 
-const ropeMesh = new RopeMesh(sim.count, ROPE_RADIUS, { base: '#e8742a', strand: '#b4501b', fleck: '#f6d9a6' }, '#2f7cf6');
+const ropeMesh = new RopeMesh(sim.count, ROPE_RADIUS, { strand: '#ffcf4a', groove: '#b07a12' }, '#2f7cf6');
 stage.scene.add(ropeMesh.object);
 const dragger = new RopeDragger(sim, meadow.log, stage.camera, container, stage.controls, stage.scene);
 
