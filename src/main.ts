@@ -48,7 +48,7 @@ const levelState = (index: number): LevelState => {
 /** Start at the first knot that's open but not yet tied (or the first one). */
 let levelIndex = Math.max(LEVELS.findIndex((_, i) => levelState(i) === 'open'), 0);
 let knot: KnotDefinition = LEVELS[levelIndex];
-let path = new RopePath(knot.path!);
+let path = new RopePath(knot.path!, ROPE_RADIUS);
 
 // ---- Rope ---------------------------------------------------------------------------------
 
@@ -179,7 +179,7 @@ const selectLevel = (index: number): void => {
   if (!isUnlocked(index, completed, unlockAll)) return;
   levelIndex = index;
   knot = LEVELS[index];
-  path = new RopePath(knot.path!);
+  path = new RopePath(knot.path!, ROPE_RADIUS);
   timeline = timelineFor();
   panel.setKnot(knot);
   refreshLevels();

@@ -19,8 +19,9 @@ export interface KnotPath {
   traceFrom: number;
   /** For each step, the control point where that step ends. */
   stepEnds: number[];
-  /** Control points spanning the knot itself, which gets pulled tight at the end. */
-  body: [number, number];
+  /** Control points where the knot itself begins (on the standing part) and ends (where the tail hangs free) — the part that pulls tight. */
+  knotFrom: number;
+  tailFrom: number;
 }
 
 export interface KnotDefinition {

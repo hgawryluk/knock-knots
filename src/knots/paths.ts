@@ -37,7 +37,8 @@ export const OVERHAND_PATH: KnotPath = {
   ]),
   traceFrom: 2,
   stepEnds: [7, 11, 15],
-  body: [2, 14],
+  knotFrom: 1,
+  tailFrom: 14,
 };
 
 
@@ -70,5 +71,6 @@ export const FIGURE_EIGHT_PATH: KnotPath = {
   ]),
   traceFrom: 2,
   stepEnds: [8, 12, 18],
-  body: [2, 17],
+  knotFrom: 1,
+  tailFrom: 17,
 };
