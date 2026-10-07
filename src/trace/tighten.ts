@@ -8,8 +8,9 @@ import type { Rail } from '../knots/types';
  * little smoothing to keep curves round. The standing part and the tail ease
  * into it and keep their place.
  *
- * A knot tied round a rail is drawn in along the rail only, and kept wrapped
- * snugly round it rather than pulled into it.
+ * A knot tied round a rail already lies on it, so it only slides together
+ * along the rail: every bit of rope keeps its height and depth, so the turns
+ * stay hugging the rail all the way through.
  *
  * Sample i of the result is the same bit of rope as sample i of the loose knot,
  * so blending between them shows the knot drawing up.
@@ -17,6 +18,8 @@ import type { Rail } from '../knots/types';
 
 /** How far the knot body is drawn in across the view (fraction of its loose spread). */
 const DRAW_IN = 0.4;
+/** How far the turns of a knot on a rail slide together along it. */
+const RAIL_DRAW_IN = 0.55;
 /** Samples over which the pull eases in from the standing part and out into the tail. */
 const EASE_SAMPLES = 60;
 /** Every Nth dense sample takes part in the relaxation. */
@@ -48,6 +51,12 @@ export function tightenKnot(loose: Float32Array, samples: number, radius: number
   cx /= count;
   cy /= count;
 
+  if (rail) {
+    const out = Float32Array.from(loose);
+    for (let s = 0; s <= samples; s++) out[s * 3] = cx + (loose[s * 3] - cx) * (1 - (1 - RAIL_DRAW_IN) * weight(s));
+    return out;
+  }
+
   // Coarse chain of nodes for the relaxation.
   const indices: number[] = [];
   for (let s = 0; s < samples; s += NODE_STRIDE) indices.push(s);
@@ -59,7 +68,7 @@ export function tightenKnot(loose: Float32Array, samples: number, radius: number
     const k = 1 - (1 - DRAW_IN) * weight(s);
     w[i] = weight(s);
     p[i * 3] = cx + (loose[s * 3] - cx) * k;
-    p[i * 3 + 1] = rail ? loose[s * 3 + 1] : cy + (loose[s * 3 + 1] - cy) * k;
+    p[i * 3 + 1] = cy + (loose[s * 3 + 1] - cy) * k;
     p[i * 3 + 2] = loose[s * 3 + 2];
   });
 
@@ -69,7 +78,6 @@ export function tightenKnot(loose: Float32Array, samples: number, radius: number
   for (let iteration = 0; iteration < RELAX_ITERATIONS; iteration++) {
     separate(p, w, n, minDist, skip);
     smooth(p, w, n);
-    if (rail) wrapRound(p, w, n, rail, rail.radius + radius);
   }
 
   // Map the nodes back onto every dense sample.
@@ -127,19 +135,6 @@ function separate(p: Float32Array, w: Float32Array, n: number, minDist: number, 
         }
       }
     }
-  }
-}
-
-/** Keeps knot nodes resting on the rail's surface instead of sinking into it. */
-function wrapRound(p: Float32Array, w: Float32Array, n: number, rail: Rail, contact: number): void {
-  for (let i = 0; i < n; i++) {
-    if (w[i] <= 0) continue;
-    const dy = p[i * 3 + 1] - rail.y;
-    const dz = p[i * 3 + 2] - rail.z;
-    const d = Math.hypot(dy, dz);
-    if (d >= contact || d < 1e-9) continue;
-    p[i * 3 + 1] = rail.y + (dy / d) * contact;
-    p[i * 3 + 2] = rail.z + (dz / d) * contact;
   }
 }
 
