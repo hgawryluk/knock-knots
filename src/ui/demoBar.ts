@@ -1,11 +1,17 @@
-import type { DemoRecording } from '../demo/recorder';
+/** A demo to play: how many frames, where each knot step starts, and playback speed. */
+export interface Timeline {
+  frameCount: number;
+  /** First frame of each knot step. */
+  stepFrames: number[];
+  fps: number;
+}
 
 export interface DemoBarHandlers {
   /** Leave the demo and tie it yourself. */
   onTry: () => void;
   /** Go back to the demo from "try it yourself". */
   onWatch: () => void;
-  /** Show this recorded frame (on the demo rope). */
+  /** Show this frame of the demo. */
   onFrame: (frame: number, step: number) => void;
 }
 
@@ -33,7 +39,7 @@ export class DemoBar {
   private readonly ticks: HTMLElement;
   private readonly label: HTMLElement;
   private readonly watchButton: HTMLButtonElement;
-  private recording: DemoRecording | null = null;
+  private recording: Timeline | null = null;
   private stepTitles: string[] = [];
   private frame = 0;
   private time = 0;
@@ -58,7 +64,7 @@ export class DemoBar {
         </div>
       </div>
       <div class="demo-tryview">
-        <span class="demo-hints">Drag the blue end · Shift: tuck under · Scroll: lift · Drag background: rotate</span>
+        <span class="demo-hints">Drag the blue end along the glowing path · Drag anywhere else to look around · Scroll to zoom</span>
         <button type="button" class="demo-watch-again" data-action="watch">Watch demo</button>
       </div>
     `;
@@ -92,12 +98,12 @@ export class DemoBar {
   }
 
   /** Switch to the demo player and start playing from the beginning. */
-  showWatch(recording: DemoRecording, stepTitles: string[]): void {
+  showWatch(recording: Timeline, stepTitles: string[]): void {
     this.recording = recording;
     this.stepTitles = stepTitles;
     this.watchView.hidden = false;
     this.tryView.hidden = true;
-    const last = recording.frames.length - 1;
+    const last = recording.frameCount - 1;
     this.scrub.max = String(last);
     this.ticks.replaceChildren(
       ...recording.stepFrames.map((frame, i) => {
@@ -122,8 +128,8 @@ export class DemoBar {
     if (!this.playing || !this.recording) return;
     this.time += dt;
     const frame = Math.floor(this.time * this.recording.fps);
-    if (frame >= this.recording.frames.length - 1) {
-      this.seek(this.recording.frames.length - 1);
+    if (frame >= this.recording.frameCount - 1) {
+      this.seek(this.recording.frameCount - 1);
       this.setPlaying(false);
       return;
     }
@@ -141,11 +147,11 @@ export class DemoBar {
 
   private seek(frame: number, play = false): void {
     if (!this.recording) return;
-    this.frame = Math.max(0, Math.min(frame, this.recording.frames.length - 1));
+    this.frame = Math.max(0, Math.min(frame, this.recording.frameCount - 1));
     this.time = this.frame / this.recording.fps;
     this.scrub.value = String(this.frame);
     const step = this.stepAt(this.frame);
-    const finished = this.frame >= this.recording.frames.length - 1;
+    const finished = this.frame >= this.recording.frameCount - 1;
     this.label.textContent = finished
       ? 'Done — now try it yourself'
       : `Step ${step + 1} of ${this.stepTitles.length} · ${this.stepTitles[step]}`;
@@ -160,12 +166,12 @@ export class DemoBar {
     // "Previous" from the middle of a step goes back to that step's start.
     const target = direction < 0 && this.frame > starts[current] + 5 ? current : current + direction;
     this.setPlaying(false);
-    if (target >= starts.length) this.seek(this.recording.frames.length - 1);
+    if (target >= starts.length) this.seek(this.recording.frameCount - 1);
     else this.seek(starts[Math.max(target, 0)], true);
   }
 
   private setPlaying(playing: boolean): void {
-    if (playing && this.recording && this.frame >= this.recording.frames.length - 1) this.seek(0);
+    if (playing && this.recording && this.frame >= this.recording.frameCount - 1) this.seek(0);
     this.playing = playing && !!this.recording;
     this.playButton.innerHTML = this.playing ? ICONS.pause : ICONS.play;
     this.playButton.title = this.playing ? 'Pause (Space)' : 'Play (Space)';

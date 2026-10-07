@@ -1,13 +1,3 @@
-import type { Log } from '../scene/log';
-
-/** Everything a knot checker may look at: the rope as it lies right now, and the log. */
-export interface KnotContext {
-  positions: Float32Array;
-  count: number;
-  ropeRadius: number;
-  log: Log;
-}
-
 export interface KnotStep {
   title: string;
   hint: string;
@@ -15,16 +5,30 @@ export interface KnotStep {
 
 export type KnotType = 'Stopper' | 'Loop' | 'Hitch';
 
-/** Where the rope starts: lying loose on the grass (knots tied in the rope) or in front of the log (hitches). */
-export type KnotSetup = 'grass' | 'log';
+export type Point3 = [number, number, number];
+
+/**
+ * The one correct way to tie a knot: the rope's path through the finished
+ * (loosely dressed) knot, from the anchored standing end to the working end.
+ * The demo draws the rope along it; you trace the same path with the mouse.
+ */
+export interface KnotPath {
+  /** Control points in world units, standing end first. */
+  points: Point3[];
+  /** Control point where tracing starts — the rope above it is already in place. */
+  traceFrom: number;
+  /** For each step, the control point where that step ends. */
+  stepEnds: number[];
+  /** Control points spanning the knot itself, which gets pulled tight at the end. */
+  body: [number, number];
+}
 
 export interface KnotDefinition {
   id: string;
   name: string;
   type: KnotType;
   summary: string;
-  setup: KnotSetup;
   steps: KnotStep[];
-  /** Number of leading steps the rope currently satisfies; steps.length means tied. */
-  evaluate: (context: KnotContext) => number;
+  /** Missing while the knot's path hasn't been authored yet. */
+  path?: KnotPath;
 }

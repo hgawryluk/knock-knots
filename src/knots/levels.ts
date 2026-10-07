@@ -1,22 +1,33 @@
-import { CLOVE_HITCH } from './cloveHitch';
-import { FIGURE_EIGHT, OVERHAND } from './stoppers';
-import type { KnotDefinition, KnotType } from './types';
+import { OVERHAND_PATH } from './paths';
+import type { KnotDefinition } from './types';
 
-export interface Level {
-  name: string;
-  type: KnotType;
-  /** Missing while the level is still to come. */
-  knot?: KnotDefinition;
-}
+export const OVERHAND: KnotDefinition = {
+  id: 'overhand',
+  name: 'Overhand Knot',
+  type: 'Stopper',
+  summary: 'The simplest knot and the base of many others. Stops a rope end from slipping through.',
+  steps: [
+    { title: 'Make a loop', hint: 'Drag the blue end round to the left and up, crossing over the rope.' },
+    { title: 'Around the back', hint: 'Take the end round the right side and behind the rope.' },
+    { title: 'Through the loop', hint: 'Bring the end forward through the loop and let it hang down.' },
+  ],
+  path: OVERHAND_PATH,
+};
 
 /** The learning path, simplest first (order follows knots3d.com's beginner knots). */
-export const LEVELS: Level[] = [
-  { name: OVERHAND.name, type: OVERHAND.type, knot: OVERHAND },
-  { name: FIGURE_EIGHT.name, type: FIGURE_EIGHT.type, knot: FIGURE_EIGHT },
-  { name: 'Overhand Loop', type: 'Loop' },
-  { name: 'Figure-Eight Loop', type: 'Loop' },
-  { name: 'Two Half Hitches', type: 'Hitch' },
-  { name: CLOVE_HITCH.name, type: CLOVE_HITCH.type, knot: CLOVE_HITCH },
+export const LEVELS: KnotDefinition[] = [
+  OVERHAND,
+  {
+    id: 'figure-eight',
+    name: 'Figure-Eight Knot',
+    type: 'Stopper',
+    summary: 'A bulkier, more secure stopper that is easier to untie, and the base of the climber’s tie-in.',
+    steps: [],
+  },
+  { id: 'overhand-loop', name: 'Overhand Loop', type: 'Loop', summary: '', steps: [] },
+  { id: 'figure-eight-loop', name: 'Figure-Eight Loop', type: 'Loop', summary: '', steps: [] },
+  { id: 'two-half-hitches', name: 'Two Half Hitches', type: 'Hitch', summary: '', steps: [] },
+  { id: 'clove-hitch', name: 'Clove Hitch', type: 'Hitch', summary: 'Quick, adjustable hitch to fix a rope to a log, post or carabiner.', steps: [] },
 ];
 
 const STORAGE_KEY = 'knots.completed';
@@ -39,9 +50,9 @@ export function saveCompleted(completed: Set<string>): void {
   }
 }
 
-/** A level opens once every playable level before it has been tied. */
+/** A level opens once every playable level before it has been tied. Levels without a path are still to come. */
 export function isUnlocked(index: number, completed: Set<string>, unlockAll = false): boolean {
-  if (!LEVELS[index].knot) return false;
+  if (!LEVELS[index].path) return false;
   if (unlockAll) return true;
-  return LEVELS.slice(0, index).every((level) => !level.knot || completed.has(level.knot.id));
+  return LEVELS.slice(0, index).every((level) => !level.path || completed.has(level.id));
 }

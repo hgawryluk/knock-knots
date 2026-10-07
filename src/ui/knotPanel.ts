@@ -1,4 +1,3 @@
-import type { Level } from '../knots/levels';
 import type { KnotDefinition } from '../knots/types';
 
 export type LevelState = 'done' | 'open' | 'locked' | 'soon';
@@ -19,7 +18,7 @@ export class KnotPanel {
   private completed = -1;
   private announce = true;
 
-  constructor(root: HTMLElement, levels: Level[], onSelect: (index: number) => void, onReset: () => void) {
+  constructor(root: HTMLElement, levels: KnotDefinition[], onSelect: (index: number) => void, onReset: () => void) {
     const panel = document.createElement('section');
     panel.className = 'knot-panel';
     panel.innerHTML = `
@@ -50,7 +49,7 @@ export class KnotPanel {
     root.appendChild(panel);
   }
 
-  setLevels(levels: Level[], states: LevelState[], selected: number): void {
+  setLevels(levels: KnotDefinition[], states: LevelState[], selected: number): void {
     this.levelButtons.forEach((button, index) => {
       const state = states[index];
       button.className = `knot-level ${state}${index === selected ? ' selected' : ''}`;
