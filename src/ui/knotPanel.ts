@@ -69,7 +69,8 @@ export class KnotPanel {
     this.levelButtons.forEach((button, index) => {
       const state = states[index];
       button.className = `knot-level ${state}${index === selected ? ' selected' : ''}`;
-      button.disabled = state === 'locked' || state === 'soon';
+      // Still clickable, so a locked knot can say what unlocks it.
+      button.setAttribute('aria-disabled', String(state === 'locked' || state === 'soon'));
       const note = state === 'soon' ? ' — coming soon' : state === 'locked' ? ' — tie the earlier knots in this section first' : state === 'done' ? ' — tied' : '';
       button.title = `${levels[index].name}${note}`;
       button.setAttribute('aria-label', button.title);

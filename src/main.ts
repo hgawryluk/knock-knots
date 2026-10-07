@@ -182,7 +182,16 @@ const demoBar = new DemoBar(ui, {
 });
 
 const selectLevel = (index: number): void => {
-  if (!isUnlocked(index, completed, unlockAll)) return;
+  const level = LEVELS[index];
+  if (!level.path) {
+    coach.show(`${level.name} is coming soon`, 'Its demo isn’t ready yet. Pick one of the bright knots.');
+    return;
+  }
+  if (!isUnlocked(index, completed, unlockAll)) {
+    const first = LEVELS.find((earlier, i) => i < index && earlier.section === level.section && earlier.path && !completed.has(earlier.id));
+    coach.show(`${level.name} is locked`, `Tie the ${first?.name ?? 'earlier knots'} first to unlock it.`);
+    return;
+  }
   levelIndex = index;
   knot = LEVELS[index];
   path = new RopePath(knot.path!, ROPE_RADIUS);
