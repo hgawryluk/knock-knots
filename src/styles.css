@@ -221,23 +221,29 @@ body {
   display: block;
 }
 
+/* Space is always reserved so the Reset button never moves when the message appears. */
 .knot-status {
-  height: 0;
-  overflow: hidden;
+  height: 20px;
+  margin-top: 12px;
   font-size: 14px;
   font-weight: 600;
   color: #8fd694;
-  transition: height 300ms ease, margin 300ms ease;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 300ms ease, transform 300ms ease;
 }
 
 .knot-status.visible {
-  height: 20px;
-  margin-top: 12px;
+  opacity: 1;
+  transform: none;
 }
 
+/* Pinned to the panel corner so it never moves as hints and messages come and go. */
 .knot-reset {
-  margin-top: 14px;
-  padding: 6px 12px;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 5px 10px;
   border-radius: 8px;
   border: 1px solid var(--chip-border);
   background: transparent;

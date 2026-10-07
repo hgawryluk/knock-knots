@@ -75,6 +75,17 @@ export class RopeDragger {
     return this.pointerId !== -1;
   }
 
+  /** Drops whatever is held and clears hover state (e.g. when the rope is reset). */
+  cancel(): void {
+    if (this.dragging && this.surface.hasPointerCapture(this.pointerId)) this.surface.releasePointerCapture(this.pointerId);
+    this.pointerId = -1;
+    this.hovered = -1;
+    this.sim.release();
+    this.sim.tuckUnder = false;
+    this.controls.enabled = true;
+    this.surface.style.cursor = '';
+  }
+
   /** Keeps the hover/grab ring on the rope and facing the camera. */
   update(): void {
     const index = this.dragging ? this.sim.grabbedIndex : this.hovered;

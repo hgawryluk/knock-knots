@@ -23,6 +23,7 @@ const START_PATH = [
 
 const container = document.getElementById('stage')!;
 const stage = new Stage(container);
+const resetView = (): void => stage.setView(new THREE.Vector3(0, 0.3, 0.6), 9.5, Math.PI * 0.3, 0.35);
 const meadow = await createMeadow(stage.scene, stage.renderer);
 stage.scene.add(meadow.root);
 stage.onUpdate(meadow.update);
@@ -44,9 +45,15 @@ createOverlay(ui);
 /** Once tied, the knot is set and stays counted as tied until the rope is reset. */
 let tied = false;
 const resetRope = (): void => {
+  dragger.cancel();
   sim.reset(startPoints());
   tied = false;
+  resetView();
+  updateProgress();
 };
+window.addEventListener('keydown', (event) => {
+  if ((event.key === 'r' || event.key === 'R') && !event.repeat && !(event.target instanceof HTMLInputElement)) resetRope();
+});
 const panel = new KnotPanel(ui, CLOVE_HITCH, resetRope);
 const updateProgress = (): void => {
   if (tied) return;
@@ -87,7 +94,6 @@ if (import.meta.env.DEV) {
     mouseClove: (stopAfter?: string) => {
       simPaused = true;
       resetRope();
-      resetView();
       const status = (): string => {
         updateProgress();
         const samples = sampleAroundLog(sim.positions, sim.count, meadow.log, ROPE_RADIUS);
@@ -136,6 +142,5 @@ if (import.meta.env.DEV) {
   });
 }
 
-const resetView = (): void => stage.setView(new THREE.Vector3(0, 0.3, 0.6), 9.5, Math.PI * 0.3, 0.35);
 resetView();
 requestAnimationFrame(() => document.getElementById('fade')!.classList.add('hidden'));

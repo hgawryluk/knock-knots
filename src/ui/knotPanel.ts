@@ -15,7 +15,7 @@ export class KnotPanel {
       <p class="knot-summary">${knot.summary}</p>
       <ol class="knot-steps"></ol>
       <div class="knot-status" aria-live="polite"></div>
-      <button class="knot-reset" type="button">Reset rope</button>
+      <button class="knot-reset" type="button" title="Reset rope (R)">Reset</button>
     `;
     const list = panel.querySelector('.knot-steps')!;
     this.items = knot.steps.map((step) => {
