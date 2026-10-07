@@ -285,3 +285,48 @@ body {
     display: none;
   }
 }
+
+.knot-levels {
+  display: flex;
+  gap: 6px;
+  margin: 0 64px 14px 0;
+}
+
+.knot-level {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--chip-border);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 200ms ease, border-color 200ms ease, color 200ms ease;
+}
+
+.knot-level:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+
+.knot-level.done {
+  border-color: #6fbf73;
+  color: #8fd694;
+}
+
+.knot-level.selected {
+  border-color: #2f7cf6;
+  background: rgba(47, 124, 246, 0.3);
+  color: var(--text);
+}
+
+.knot-level.locked,
+.knot-level.soon {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.knot-level.soon {
+  border-style: dashed;
+}

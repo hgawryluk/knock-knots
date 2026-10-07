@@ -1,37 +1,86 @@
-import type { KnotDefinition } from '../knots/cloveHitch';
+import type { Level } from '../knots/levels';
+import type { KnotDefinition } from '../knots/types';
 
-/** Top-left card: knot name, live step checklist with the current hint, and a reset button. */
+export type LevelState = 'done' | 'open' | 'locked' | 'soon';
+
+/**
+ * Top-left card: a row of numbered levels, then the selected knot's name,
+ * live step checklist with the current hint, and a reset button.
+ */
 export class KnotPanel {
-  private readonly items: HTMLLIElement[];
+  private readonly levelButtons: HTMLButtonElement[];
+  private readonly type: HTMLElement;
+  private readonly name: HTMLElement;
+  private readonly summary: HTMLElement;
+  private readonly steps: HTMLOListElement;
   private readonly status: HTMLElement;
+  private items: HTMLLIElement[] = [];
+  private knot: KnotDefinition | null = null;
   private completed = -1;
 
-  constructor(root: HTMLElement, private readonly knot: KnotDefinition, onReset: () => void) {
+  constructor(root: HTMLElement, levels: Level[], onSelect: (index: number) => void, onReset: () => void) {
     const panel = document.createElement('section');
     panel.className = 'knot-panel';
     panel.innerHTML = `
-      <div class="knot-type">${knot.type}</div>
-      <h1 class="knot-name">${knot.name}</h1>
-      <p class="knot-summary">${knot.summary}</p>
+      <nav class="knot-levels" aria-label="Knots"></nav>
+      <div class="knot-type"></div>
+      <h1 class="knot-name"></h1>
+      <p class="knot-summary"></p>
       <ol class="knot-steps"></ol>
       <div class="knot-status" aria-live="polite"></div>
       <button class="knot-reset" type="button" title="Reset rope (R)">Reset</button>
     `;
-    const list = panel.querySelector('.knot-steps')!;
-    this.items = knot.steps.map((step) => {
-      const li = document.createElement('li');
-      li.innerHTML = `<span class="step-title">${step.title}</span><span class="step-hint">${step.hint}</span>`;
-      list.appendChild(li);
-      return li;
+    const nav = panel.querySelector('.knot-levels')!;
+    this.levelButtons = levels.map((_, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'knot-level';
+      button.textContent = String(index + 1);
+      button.addEventListener('click', () => onSelect(index));
+      nav.appendChild(button);
+      return button;
     });
+    this.type = panel.querySelector('.knot-type')!;
+    this.name = panel.querySelector('.knot-name')!;
+    this.summary = panel.querySelector('.knot-summary')!;
+    this.steps = panel.querySelector('.knot-steps')!;
     this.status = panel.querySelector('.knot-status')!;
     panel.querySelector('.knot-reset')!.addEventListener('click', onReset);
     root.appendChild(panel);
+  }
+
+  setLevels(levels: Level[], states: LevelState[], selected: number): void {
+    this.levelButtons.forEach((button, index) => {
+      const state = states[index];
+      button.className = `knot-level ${state}${index === selected ? ' selected' : ''}`;
+      button.disabled = state === 'locked' || state === 'soon';
+      const note = state === 'soon' ? ' — coming soon' : state === 'locked' ? ' — tie the earlier knots first' : state === 'done' ? ' — tied' : '';
+      button.title = `${levels[index].name}${note}`;
+      button.setAttribute('aria-label', button.title);
+      button.setAttribute('aria-current', index === selected ? 'true' : 'false');
+    });
+  }
+
+  setKnot(knot: KnotDefinition): void {
+    this.knot = knot;
+    this.type.textContent = knot.type;
+    this.name.textContent = knot.name;
+    this.summary.textContent = knot.summary;
+    this.steps.replaceChildren();
+    this.items = knot.steps.map((step) => {
+      const li = document.createElement('li');
+      li.innerHTML = `<span class="step-title"></span><span class="step-hint"></span>`;
+      li.querySelector('.step-title')!.textContent = step.title;
+      li.querySelector('.step-hint')!.textContent = step.hint;
+      this.steps.appendChild(li);
+      return li;
+    });
+    this.completed = -1;
     this.setProgress(0);
   }
 
   setProgress(completed: number): void {
-    if (completed === this.completed) return;
+    if (!this.knot || completed === this.completed) return;
     this.completed = completed;
     this.items.forEach((li, i) => {
       li.classList.toggle('done', i < completed);

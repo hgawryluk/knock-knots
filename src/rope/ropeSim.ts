@@ -20,10 +20,17 @@ const DAMPING = 0.992;
 const MAX_GRAB_STEP = 0.05;
 /** How many particles either side of the hand count as "the end being tucked". */
 const TUCK_REACH = 4;
+/** Within this normalized distance of the log axis, "lift" means away from the log rather than up. */
+const LIFT_NEAR_LOG = 1.6;
 /** Minimum distance between particles i and i+2, in segment lengths (2 = straight). */
 const MIN_BEND_SPAN = 1.85;
 const BEND_STIFFNESS = 0.3;
 const GROUND_FRICTION = 0.55;
+/** Per-iteration grip for rope on the grass (see applyGroundFriction). */
+const GROUND_SIDE_GRIP = 0.35;
+const GROUND_ALONG_GRIP = 0.06;
+/** Particles this close to the hand (≈1.2 units of rope) follow it without grass grip. */
+const CARRIED_BY_HAND = 24;
 /**
  * Per-iteration share of sliding (since the substep began) cancelled for rope on the log.
  * Rope slides lengthwise along its own path fairly easily (so you can pull it around the
@@ -61,6 +68,11 @@ export class RopeSim {
   tuckUnder = false;
   /** A finished knot is "set" (snugged tight): rope on the log and on itself grips firmly until reset. */
   knotSet = false;
+  /**
+   * How much the grass holds rope in place (0–1). Knots tied on the grass need laid loops to
+   * keep their shape; hitches on the log need the standing part to slide so they can draw up.
+   */
+  groundGrip = 1;
   private readonly grabTarget = new THREE.Vector3();
 
   constructor(
@@ -325,23 +337,27 @@ export class RopeSim {
     p[b + 2] += (rz * wj) / w;
   }
 
-  /** Pushes particle `i` outward from the log by the overlap; false if it isn't on the log. */
+  /** Pushes particle `i` away from the surface it lies on (the log, else the ground) by the overlap. */
   private liftOver(i: number, distance: number, minDist: number): boolean {
     if (this.invMass[i] === 0) return false;
     const p = this.positions;
     const k = i * 3;
-    const { log } = this.colliders;
-    if (p[k] <= log.minX || p[k] >= log.maxX) return false;
-    const s = log.sectionAt(p[k], this.section);
-    let ny = (p[k + 1] - s.cy) / (s.ry * s.ry);
-    let nz = (p[k + 2] - s.cz) / (s.rz * s.rz);
-    const len = Math.hypot(ny, nz);
-    if (len < 1e-6) return false;
-    ny /= len;
-    nz /= len;
     const lift = minDist - distance;
-    p[k + 1] += ny * lift;
-    p[k + 2] += nz * lift;
+    const { log } = this.colliders;
+    const s = p[k] > log.minX && p[k] < log.maxX ? log.sectionAt(p[k], this.section) : null;
+    if (s && Math.hypot((p[k + 1] - s.cy) / s.ry, (p[k + 2] - s.cz) / s.rz) < LIFT_NEAR_LOG) {
+      let ny = (p[k + 1] - s.cy) / (s.ry * s.ry);
+      let nz = (p[k + 2] - s.cz) / (s.rz * s.rz);
+      const len = Math.hypot(ny, nz);
+      if (len < 1e-6) return false;
+      ny /= len;
+      nz /= len;
+      p[k + 1] += ny * lift;
+      p[k + 2] += nz * lift;
+      return true;
+    }
+    // Away from the log (e.g. rope on the grass) "away from the surface" is simply up.
+    p[k + 1] += lift;
     return true;
   }
 
@@ -390,7 +406,10 @@ export class RopeSim {
 
       if (p[k + 1] < groundY + r) {
         p[k + 1] = groundY + r;
-        if (this.contact[i] === NO_CONTACT) this.contact[i] = GROUND_CONTACT;
+        if (this.contact[i] === NO_CONTACT) {
+          this.contact[i] = GROUND_CONTACT;
+          if (i !== this.grabbed) this.applyGroundFriction(i);
+        }
       }
     }
   }
@@ -399,6 +418,33 @@ export class RopeSim {
    * Position-level friction against the log, measured from where the particle
    * started this substep: sideways slip is cancelled strongly, lengthwise slide weakly.
    */
+  /**
+   * Rope on the grass behaves like a snake: it slides along its own length
+   * easily but resists being dragged sideways, so loops and curves you lay
+   * down keep their shape instead of being pulled straight.
+   */
+  private applyGroundFriction(i: number): void {
+    const p = this.positions;
+    const q = this.previous;
+    const k = i * 3;
+    const a = Math.max(i - 1, 0) * 3;
+    const b = Math.min(i + 1, this.count - 1) * 3;
+    let tx = p[b] - p[a];
+    let tz = p[b + 2] - p[a + 2];
+    const tl = Math.hypot(tx, tz) || 1;
+    tx /= tl;
+    tz /= tl;
+    const dx = p[k] - q[k];
+    const dz = p[k + 2] - q[k + 2];
+    const along = dx * tx + dz * tz;
+    // Rope just behind your hand is being carried along with it, so it moves freely.
+    const carried = this.grabbed >= 0 && Math.abs(this.grabbed - i) <= CARRIED_BY_HAND;
+    const side = this.knotSet ? HELD_GRIP : (carried ? GROUND_ALONG_GRIP : GROUND_SIDE_GRIP) * this.groundGrip;
+    const lengthwise = this.knotSet ? HELD_GRIP : GROUND_ALONG_GRIP * this.groundGrip;
+    p[k] -= (dx - along * tx) * side + along * tx * lengthwise;
+    p[k + 2] -= (dz - along * tz) * side + along * tz * lengthwise;
+  }
+
   private applyLogFriction(i: number, cy: number, cz: number, ry: number, rz: number): void {
     const p = this.positions;
     const q = this.previous;
