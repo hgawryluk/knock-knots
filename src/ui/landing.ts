@@ -30,8 +30,8 @@ export class Landing {
             <li><span class="hero-step-2"></span></li>
             <li class="real"><span class="hero-step-3"></span></li>
           </ol>
+          <button class="hero-cta" type="button"><span class="hero-cta-text"></span><span class="hero-cta-arrow" aria-hidden="true"></span></button>
         </div>
-        <button class="hero-scroll" type="button"><span class="hero-scroll-text"></span><span class="hero-chevron" aria-hidden="true"></span></button>
       </section>
       <section class="paths">
         <h2 class="paths-title"></h2>
@@ -55,7 +55,7 @@ export class Landing {
       list.appendChild(card);
       this.cards.set(section.id, card);
     }
-    this.element.querySelector('.hero-scroll')!.addEventListener('click', () =>
+    this.element.querySelector('.hero-cta')!.addEventListener('click', () =>
       this.element.querySelector('.paths')!.scrollIntoView({ behavior: 'smooth' }),
     );
     root.appendChild(this.element);
@@ -81,7 +81,7 @@ export class Landing {
     set('.hero-step-1', t('heroStep1'));
     set('.hero-step-2', t('heroStep2'));
     set('.hero-step-3', t('heroStep3'));
-    set('.hero-scroll-text', t('chooseKnots'));
+    set('.hero-cta-text', t('chooseKnots'));
     set('.paths-title', t('pathsTitle'));
     this.element.querySelector('.paths')!.setAttribute('aria-label', t('chooseKnots'));
     for (const section of this.sections) {
@@ -116,6 +116,8 @@ export class Landing {
   /** Lights the first `count` of the three steps (the rope behind ties in time with them). */
   lightSteps(count: number): void {
     this.element.querySelectorAll('.hero-steps li').forEach((li, i) => li.classList.toggle('lit', i < count));
+    // Once all three are lit, the button glows once: now choose.
+    this.element.querySelector('.hero-cta')!.classList.toggle('ready', count >= 3);
   }
 
   show(): void {

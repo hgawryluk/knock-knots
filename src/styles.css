@@ -636,39 +636,74 @@ body {
   }
 }
 
-.hero-scroll {
-  position: absolute;
-  left: 50%;
-  bottom: 26px;
-  display: flex;
-  flex-direction: column;
+/* Primary call to action under the steps: gold like the lit steps, glows once all three are lit. */
+.hero-cta {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px 10px;
-  transform: translateX(-50%);
-  border: 1px solid var(--chip-border);
+  gap: 12px;
+  margin-top: 26px;
+  padding: 15px 22px 15px 26px;
+  border: 0;
   border-radius: 999px;
-  background: var(--chip);
-  backdrop-filter: blur(8px);
-  color: var(--text);
+  background: #ffcf4a;
+  color: #2a2410;
   font: inherit;
-  font-size: 13px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: 0 6px 24px rgba(255, 207, 74, 0.22);
   cursor: pointer;
-  /* Appears once the knot is pulled tight and all three steps are lit. */
-  animation: scroll-in 900ms 4100ms ease both;
+  transition: transform 200ms ease, box-shadow 200ms ease, background 200ms ease;
 }
 
-.hero-scroll:hover {
-  background: rgba(40, 40, 30, 0.75);
+.hero-cta:hover {
+  transform: translateY(-2px);
+  background: #ffd96a;
+  box-shadow: 0 10px 32px rgba(255, 207, 74, 0.38);
 }
 
-.hero-chevron {
+.hero-cta:active {
+  transform: translateY(0);
+}
+
+.hero-cta:focus-visible {
+  outline: 2px solid #fff3c4;
+  outline-offset: 3px;
+}
+
+.hero-cta.ready {
+  animation: cta-glow 1400ms ease;
+}
+
+/* A small down arrow that nudges toward the cards on hover. */
+.hero-cta-arrow {
   width: 8px;
   height: 8px;
-  border-right: 1.5px solid currentColor;
-  border-bottom: 1.5px solid currentColor;
+  margin-top: -4px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
   transform: rotate(45deg);
-  animation: chevron 1.8s ease-in-out infinite;
+  transition: transform 200ms ease;
+}
+
+.hero-cta:hover .hero-cta-arrow {
+  transform: translateY(3px) rotate(45deg);
+}
+
+@keyframes cta-glow {
+  40% {
+    box-shadow: 0 0 0 8px rgba(255, 207, 74, 0.25), 0 10px 36px rgba(255, 207, 74, 0.5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-cta,
+  .hero-cta-arrow {
+    transition: none;
+  }
+  .hero-cta.ready {
+    animation: none;
+  }
 }
 
 .paths {
@@ -813,32 +848,9 @@ body {
   }
 }
 
-@keyframes scroll-in {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 10px);
-  }
-}
-
-@keyframes chevron {
-  0%,
-  100% {
-    transform: translateY(-2px) rotate(45deg);
-  }
-  50% {
-    transform: translateY(2px) rotate(45deg);
-  }
-}
-
 @media (max-width: 720px) {
   .paths {
     background: linear-gradient(180deg, rgba(14, 16, 10, 0.4) 0%, rgba(14, 16, 10, 0.85) 30%);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-chevron {
-    animation: none;
   }
 }
 
