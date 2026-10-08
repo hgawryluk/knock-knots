@@ -113,7 +113,7 @@ export class Landing {
     }
   }
 
-  /** Shows the first `count` of the three steps, each appearing as the rope behind reaches it. */
+  /** Lights the first `count` of the three steps (the rope behind ties in time with them). */
   lightSteps(count: number): void {
     this.element.querySelectorAll('.hero-steps li').forEach((li, i) => li.classList.toggle('lit', i < count));
   }

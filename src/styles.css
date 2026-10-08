@@ -567,8 +567,8 @@ body {
   text-shadow: 0 1px 16px rgba(0, 0, 0, 0.5);
 }
 
-/* The learning path: watch, tie it here, then in real life. Each step appears,
-   in yellow, as the rope behind reaches it; the last one is the point. */
+/* The learning path: watch, tie it here, then in real life. The steps light up
+   in yellow as the rope behind ties itself; the last one is the point. */
 .hero-steps {
   display: grid;
   gap: 8px;
@@ -583,12 +583,10 @@ body {
   align-items: center;
   gap: 10px;
   font-size: 15px;
-  color: #ffcf4a;
+  color: rgba(242, 239, 230, 0.55);
   text-shadow: 0 1px 16px rgba(0, 0, 0, 0.5);
   counter-increment: hero-step;
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 600ms ease, transform 600ms ease;
+  transition: color 500ms ease;
 }
 
 .hero-steps li::before {
@@ -598,22 +596,24 @@ body {
   flex: none;
   width: 24px;
   height: 24px;
-  border: 1px solid #ffcf4a;
+  border: 1px solid var(--chip-border);
   border-radius: 50%;
-  background: #ffcf4a;
-  color: #2a2410;
+  background: var(--chip);
+  color: rgba(242, 239, 230, 0.55);
   font-size: 12px;
   font-weight: 600;
-  transition: box-shadow 600ms ease;
+  transition: background 500ms ease, border-color 500ms ease, color 500ms ease, box-shadow 500ms ease;
 }
 
 .hero-steps li.lit {
-  opacity: 1;
-  transform: none;
+  color: #ffcf4a;
 }
 
 .hero-steps li.lit::before {
-  animation: step-pop 450ms 150ms ease;
+  border-color: #ffcf4a;
+  background: #ffcf4a;
+  color: #2a2410;
+  animation: step-pop 450ms ease;
 }
 
 .hero-steps li.real.lit {
@@ -631,9 +631,6 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-steps li {
-    transform: none;
-  }
   .hero-steps li.lit::before {
     animation: none;
   }
