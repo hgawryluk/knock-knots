@@ -72,7 +72,7 @@ export class RopeMesh {
     );
     this.endCap.scale.set(1, 1, 1.35);
     for (const cap of [this.startCap, this.endCap]) cap.castShadow = true;
-    this.end = new RopeEnd(radius);
+    this.end = new RopeEnd(radius, colors);
     this.object.add(tube, this.startCap, this.endCap, this.end.object);
     this.setEndStyle('cap');
   }

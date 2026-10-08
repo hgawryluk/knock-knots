@@ -93,6 +93,8 @@ const drawRope = (upTo: number, tightness = 0): void => {
 /** The second rope (already in place) and the peg holding it, for knots tied in two ropes. */
 const partnerRope = new RopeMesh(PARTNER_POINTS, ROPE_RADIUS, PARTNER_COLORS, PARTNER_COLORS.strand);
 const partnerPoints = new Float32Array(PARTNER_POINTS * 3);
+// Its loose end is simply cut, fibres showing.
+partnerRope.setEndStyle('cut');
 stage.scene.add(partnerRope.object);
 const stake = new Stake();
 stage.scene.add(stake.object);

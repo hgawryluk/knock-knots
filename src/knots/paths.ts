@@ -89,13 +89,28 @@ export const FIGURE_EIGHT_PATH: KnotPath = {
  * two legs pass the other rope's bend on the same side — a square knot, not a granny.
  */
 const SQUARE_CENTRE: [number, number] = [0.05, 1.25];
+/** The peg's neck (just under its head, the peg leaning a little) and how far round it the red rope lies. */
+const PEG_NECK: Point3 = [0.241, -0.57, 0];
+const ROUND_PEG = 0.11;
+/** A point of the red rope wound round the peg's neck: `turn` in degrees, rising a little as it goes round. */
+const roundPeg = (turn: number, rise: number): Point3 => [
+  PEG_NECK[0] + ROUND_PEG * Math.cos((turn * Math.PI) / 180),
+  PEG_NECK[1] + rise,
+  PEG_NECK[2] + ROUND_PEG * Math.sin((turn * Math.PI) / 180),
+];
 /** The bight-method knot's points (bight lying sideways) turned a quarter turn about its middle. */
 const turnSquare = ([x, y, z]: Point3): Point3 => [SQUARE_CENTRE[0] - (y - 1.2), SQUARE_CENTRE[1] + (x + 0.13), z];
 export const SQUARE_KNOT_PATH: KnotPath = {
   points: place([
-    // Red rope: pegged to the ground, up its right leg, over the top of the hook, down its left leg.
-    [0.26, -0.66, 0], // at the stake
-    [0.26, -0.1, 0],
+    // Red rope: tied round the peg's neck, up its right leg, over the top of the hook, down its left leg.
+    roundPeg(200, -0.06), // its end, tucked round the peg
+    roundPeg(270, -0.045),
+    roundPeg(360, -0.025),
+    roundPeg(450, -0.005),
+    roundPeg(540, 0.015),
+    roundPeg(630, 0.035),
+    [0.4, -0.42, 0.06], // then up from the peg, out to the side, clear of its head
+    [0.29, -0.05, 0.01],
     [0.26, 0.4, 0.05],
     ...(
       [
@@ -142,15 +157,15 @@ export const SQUARE_KNOT_PATH: KnotPath = {
     [-0.07, 2.2, -0.04],
     [-0.08, 2.45, 0], // working end, up beside the standing part
   ]),
-  traceFrom: 19,
-  stepEnds: [24, 29, 36],
-  knotFrom: 19,
-  tailFrom: 35,
+  traceFrom: 25,
+  stepEnds: [30, 35, 42],
+  knotFrom: 25,
+  tailFrom: 41,
   bodies: [
-    [2, 13],
-    [19, 35],
+    [8, 19],
+    [25, 41],
   ],
-  partner: { end: 13, start: 17, stake: place([[0.26, -0.66, 0]])[0] },
+  partner: { end: 19, start: 23, stake: place([[0.26, -0.66, 0]])[0] },
 };
 
 /**

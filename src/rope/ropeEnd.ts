@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-import { createRopeTextures } from './ropeTexture';
+import { createRopeTextures, type RopeColors } from './ropeTexture';
 
 /** How the working end is finished, like the ends of a real rope. */
-export type EndStyle = 'cap' | 'dyed' | 'whipped' | 'taped' | 'aglet';
-export const END_STYLES: EndStyle[] = ['cap', 'dyed', 'whipped', 'taped', 'aglet'];
+export type EndStyle = 'cap' | 'dyed' | 'whipped' | 'taped' | 'aglet' | 'cut';
+export const END_STYLES: EndStyle[] = ['cap', 'dyed', 'whipped', 'taped', 'aglet', 'cut'];
 
 const BLUE = '#2f7cf6';
 const RADIAL = 18;
@@ -43,7 +43,11 @@ export class RopeEnd {
   private readonly finishes: Record<Exclude<EndStyle, 'cap'>, Finish>;
   private finish: Finish | null = null;
 
-  constructor(private readonly radius: number) {
+  constructor(
+    private readonly radius: number,
+    /** The rope's own colours, for the fibres showing where it is cut. */
+    colors: RopeColors = { strand: '#ffcf4a', groove: '#b07a12' },
+  ) {
     const vertices = MAX_RINGS * (RADIAL + 1);
     this.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices * 3), 3).setUsage(THREE.DynamicDrawUsage));
     this.geometry.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(vertices * 3), 3).setUsage(THREE.DynamicDrawUsage));
@@ -99,13 +103,21 @@ export class RopeEnd {
         uv: 'plain',
         tip: 'round',
       },
+      // Plainly cut across, fibres showing — no finish at all (the sleeve stays inside the rope).
+      cut: {
+        length: 0.2,
+        radius: () => 0.97,
+        material: plastic,
+        uv: 'plain',
+        tip: 'cut',
+      },
     };
     for (const finish of Object.values(this.finishes)) finish.material.side = THREE.DoubleSide;
 
     this.sleeve = new THREE.Mesh(this.geometry, this.finishes.dyed.material);
     this.sleeve.frustumCulled = false;
     this.roundTip = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), this.finishes.dyed.material);
-    this.cutTip = new THREE.Mesh(new THREE.CircleGeometry(1, 28), new THREE.MeshStandardMaterial({ map: cutFaceTexture(), roughness: 0.9 }));
+    this.cutTip = new THREE.Mesh(new THREE.CircleGeometry(1, 28), new THREE.MeshStandardMaterial({ map: cutFaceTexture(colors), roughness: 0.9 }));
     for (const mesh of [this.sleeve, this.roundTip, this.cutTip]) mesh.castShadow = true;
     this.object.add(this.sleeve, this.roundTip, this.cutTip);
   }
@@ -217,13 +229,16 @@ function threadTextures(): { map: THREE.CanvasTexture; normalMap: THREE.CanvasTe
   return { map, normalMap };
 }
 
-/** The rope cut straight across: a gold disc of fibre ends, the braid sheath round a softer core. */
-function cutFaceTexture(): THREE.CanvasTexture {
+/** The rope cut straight across: a disc of fibre ends in the rope's colours, the braid sheath round a paler core. */
+function cutFaceTexture(colors: RopeColors): THREE.CanvasTexture {
   const size = 128;
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d')!;
-  ctx.fillStyle = '#b07a12';
+  ctx.fillStyle = colors.groove;
+  const strand = new THREE.Color(colors.strand);
+  const core = strand.clone().lerp(new THREE.Color('#f4ead2'), 0.45);
+  const rgb = (c: THREE.Color): string => `${Math.round(c.r * 255)}, ${Math.round(c.g * 255)}, ${Math.round(c.b * 255)}`;
   ctx.fillRect(0, 0, size, size);
   let seed = 11;
   const random = (): number => ((seed = (seed * 16807) % 2147483647) / 2147483647);
@@ -231,7 +246,7 @@ function cutFaceTexture(): THREE.CanvasTexture {
     const angle = random() * Math.PI * 2;
     const d = Math.sqrt(random()) * size * 0.5;
     const sheath = d > size * 0.36;
-    ctx.fillStyle = sheath ? `rgba(255, 207, 74, ${0.5 + random() * 0.5})` : `rgba(240, 214, 150, ${0.4 + random() * 0.5})`;
+    ctx.fillStyle = sheath ? `rgba(${rgb(strand)}, ${0.5 + random() * 0.5})` : `rgba(${rgb(core)}, ${0.4 + random() * 0.5})`;
     ctx.beginPath();
     ctx.arc(size / 2 + Math.cos(angle) * d, size / 2 + Math.sin(angle) * d, 1 + random() * 1.6, 0, Math.PI * 2);
     ctx.fill();
