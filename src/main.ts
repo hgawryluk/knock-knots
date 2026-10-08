@@ -235,6 +235,17 @@ if (import.meta.env.DEV) {
       path: () => path,
       mode: () => mode,
       select: selectLevel,
+      /** Checks every finished knot against the real knot, loose and pulled tight (see knots/verify.ts). */
+      verify: async () => {
+        const { verifyKnot } = await import('./knots/verify');
+        return LEVELS.filter((level) => level.path).map((level) => {
+          const levelPath = new RopePath(level.path!, ROPE_RADIUS);
+          const results = [0, 1].flatMap((tightness) =>
+            verifyKnot(level, levelPath, tightness).map((r) => ({ ...r, form: tightness ? 'tight' : 'loose' })),
+          );
+          return { knot: level.name, ok: results.every((r) => r.ok), results };
+        });
+      },
       /** Freezes the rope `traced` (0–1) of the way along the traced part, `tightness` (0–1) pulled snug — for shots. */
       pose: (traced = 1, tightness = 0) => {
         mode = 'try';
