@@ -6,6 +6,7 @@ import type { KnotDefinition, SectionId } from './knots/types';
 import { END_STYLES, type EndStyle } from './rope/ropeEnd';
 import { RopeMesh } from './rope/ropeMesh';
 import type { RopeColors } from './rope/ropeTexture';
+import { Hand } from './scene/hand';
 import { HeroRope } from './scene/hero';
 import { createMeadow } from './scene/meadow';
 import { CampRail } from './scene/rail';
@@ -80,7 +81,15 @@ const ropePoints = new Float32Array(ROPE_POINTS * 3);
 const drawRope = (upTo: number, tightness = 0): void => {
   path.writeRope(upTo, tightness, ROPE_POINTS, ropePoints);
   rope.update(ropePoints);
+  // The hand holds the rope once that part is formed, and lets go as the knot pulls tight.
+  hand.setPresent(upTo >= path.handFrom - 0.5 && tightness < 0.02);
 };
+
+/** Grey hand holding part of the rope, for knots that need one. */
+const hand = new Hand();
+stage.scene.add(hand.object);
+hand.setPose(knot.path!.hand);
+stage.onUpdate((dt) => hand.update(dt));
 
 /** The menu's opening shot ties the figure-eight. */
 const hero = new HeroRope(
@@ -242,6 +251,7 @@ const selectLevel = (index: number): void => {
   knot = LEVELS[index];
   path = new RopePath(knot.path!, ROPE_RADIUS);
   rail.show(knot.path!.rail);
+  hand.setPose(knot.path!.hand);
   timeline = timelineFor();
   panel.setKnot(knot);
   refreshLevels();
@@ -314,6 +324,7 @@ const openMenu = (): void => {
   tightening = -1;
   coach.hide();
   rail.show(undefined);
+  hand.setPose(undefined);
   ui.classList.add('away');
   stage.controls.enabled = false;
   stage.setBlur(MENU_BLUR);

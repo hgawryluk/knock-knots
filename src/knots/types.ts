@@ -35,6 +35,19 @@ export interface KnotPath {
   hold?: [number, number];
   /** A pole lying along x that the knot is tied round (world units), shown as a camp rail. */
   rail?: Rail;
+  /** A grey hand holding part of the rope while the knot is tied (world units). */
+  hand?: HandPose;
+}
+
+/**
+ * A still, open hand — a prop the rope rests on, like the rail, not an animated
+ * hand. Fingers and thumb are chains of joint positions (each a run of capsules).
+ */
+export interface HandPose {
+  palm: { center: Point3; size: Point3 };
+  fingers: { joints: Point3[]; radius: number }[];
+  /** Control point after which the hand is there (once the rope it holds has been formed). */
+  appearsAt: number;
 }
 
 export interface Rail {

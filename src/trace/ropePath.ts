@@ -13,6 +13,8 @@ export class RopePath {
   readonly sampleCount = SAMPLES;
   readonly traceFrom: number;
   readonly stepEnds: number[];
+  /** Sample from which the knot's hand holds the rope (Infinity: no hand). */
+  readonly handFrom: number;
   private readonly loose: Float32Array;
   /** Loose knot first, snug knot last. */
   private readonly frames: Float32Array[];
@@ -35,6 +37,7 @@ export class RopePath {
       (lengths[Math.round((index / (path.points.length - 1)) * divisions)] / total) * SAMPLES;
     this.traceFrom = sampleOf(path.traceFrom);
     this.stepEnds = path.stepEnds.map(sampleOf);
+    this.handFrom = path.hand ? sampleOf(path.hand.appearsAt) : Infinity;
 
     const hold = path.hold && ([sampleOf(path.hold[0]), sampleOf(path.hold[1])] as [number, number]);
     this.frames = tightenKnot(this.loose, SAMPLES, ropeRadius, sampleOf(path.knotFrom), sampleOf(path.tailFrom), hold, path.rail);

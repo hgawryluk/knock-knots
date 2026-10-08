@@ -1,4 +1,4 @@
-import type { KnotPath, Point3, Rail } from './types';
+import type { HandPose, KnotPath, Point3, Rail } from './types';
 
 /**
  * Hanging knots are authored around a local origin and placed in front of the
@@ -10,6 +10,24 @@ const HANG_AT: Point3 = [0, 0.55, 1.9];
 const KNOT_SCALE = 0.75;
 const place = (points: Point3[]): Point3[] =>
   points.map(([x, y, z]) => [x * KNOT_SCALE + HANG_AT[0], y * KNOT_SCALE + HANG_AT[1], z * KNOT_SCALE + HANG_AT[2]]);
+
+/** A hand pose authored like the paths (same units and placement). */
+const placeHand = (pose: HandPose): HandPose => ({
+  palm: { center: place([pose.palm.center])[0], size: pose.palm.size.map((s) => s * KNOT_SCALE) as Point3 },
+  fingers: pose.fingers.map(({ joints, radius }) => ({ joints: place(joints), radius: radius * KNOT_SCALE })),
+  appearsAt: pose.appearsAt,
+});
+
+/** A finger rising from the palm at `x`, its three joints curling a little toward the front. */
+const finger = (x: number, baseY: number, z: number, length: number, radius: number, lean: number): { joints: Point3[]; radius: number } => ({
+  joints: [
+    [x, baseY, z],
+    [x + lean * 0.45, baseY + length * 0.45, z + 0.04],
+    [x + lean * 0.75, baseY + length * 0.75, z + 0.1],
+    [x + lean, baseY + length, z + 0.17],
+  ],
+  radius,
+});
 
 /**
  * Overhand knot on a hanging rope: the end comes down, swings left into a loop,
@@ -129,6 +147,29 @@ export const SQUARE_KNOT_PATH: KnotPath = {
   knotFrom: 2,
   tailFrom: 34,
   hold: [12, 17],
+  // An open hand just behind the bight, palm to the front; the thumb comes over the
+  // top leg and rests on the front of the bight near its curve, holding it there.
+  hand: placeHand({
+    palm: { center: [-0.15, 1.08, -0.34], size: [0.95, 0.92, 0.24] },
+    fingers: [
+      finger(0.18, 1.47, -0.34, 0.7, 0.095, 0.05),
+      finger(-0.05, 1.47, -0.34, 0.76, 0.1, 0),
+      finger(-0.28, 1.47, -0.34, 0.7, 0.095, -0.04),
+      finger(-0.5, 1.42, -0.34, 0.56, 0.085, -0.09),
+      {
+        // Thumb: up from the palm's right side, over the top and forward onto the bight.
+        joints: [
+          [0.22, 1.1, -0.3],
+          [0.36, 1.42, -0.3], // up behind where the end comes out under the curve…
+          [0.46, 1.62, -0.12],
+          [0.44, 1.62, 0.06],
+          [0.38, 1.52, 0.2], // …and over onto the front of the bight
+        ],
+        radius: 0.1,
+      },
+    ],
+    appearsAt: 11,
+  }),
 };
 
 /**
