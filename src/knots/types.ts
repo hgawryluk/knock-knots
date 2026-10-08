@@ -33,6 +33,15 @@ export interface KnotPath {
   tailFrom: number;
   /** Control points of a stretch inside the knot that keeps its shape when pulled tight (e.g. a ring round a bundle). */
   hold?: [number, number];
+  /** Knots in two ropes: each rope's knot body (control points), used instead of knotFrom..tailFrom. */
+  bodies?: [number, number][];
+  /**
+   * A second rope, already in place (the learner ties the main rope round it):
+   * control points 0..end. The main rope starts at control point `start`; the
+   * points in between are never drawn, they just carry the curve from one rope
+   * to the other well away from the knot. `stake` is where it is pegged to the ground.
+   */
+  partner?: { end: number; start: number; stake: Point3 };
   /** A pole lying along x that the knot is tied round (world units), shown as a camp rail. */
   rail?: Rail;
 }

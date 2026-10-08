@@ -49,8 +49,7 @@ export function tightenKnot(
   loose: Float32Array,
   samples: number,
   radius: number,
-  bodyStart: number,
-  bodyEnd: number,
+  bodies: [number, number][],
   hold?: [number, number],
   rail?: Rail,
 ): Float32Array[] {
@@ -60,14 +59,14 @@ export function tightenKnot(
     return t * t * (3 - 2 * t);
   };
   const free = (s: number): number => (hold ? 1 - ease(hold[0], hold[1], s) : 1);
-  const weight = (s: number): number => ease(bodyStart, bodyEnd, s) * free(s);
+  const weight = (s: number): number => Math.max(...bodies.map(([from, to]) => ease(from, to, s))) * free(s);
 
   // Middle of the knot body (not counting a held stretch).
   let cx = 0;
   let cy = 0;
   let cz = 0;
   let count = 0;
-  for (let s = Math.ceil(bodyStart); s <= bodyEnd; s++) {
+  for (const [bodyStart, bodyEnd] of bodies) for (let s = Math.ceil(bodyStart); s <= bodyEnd; s++) {
     const w = free(s);
     cx += loose[s * 3] * w;
     cy += loose[s * 3 + 1] * w;

@@ -76,59 +76,81 @@ export const FIGURE_EIGHT_PATH: KnotPath = {
 };
 
 /**
- * Square (reef) knot by the bight method, closing a ring hung below it as if
- * round a bundle. The standing side is already folded into a bight lying
- * sideways (legs to the left, curve to the right). The end comes up from the
- * ring, under the bight's curve and over its lower leg, round behind both legs,
- * then back over the top leg and out under the curve beside itself. Each end's
- * two legs pass the other bight on the same side: that is what makes it a
- * square knot and not a granny. Tracing starts from the plain hanging rope:
- * you fold the bight and lead the ring round too.
+ * Square (reef) knot in two ropes, set up like a real one under tension: a red
+ * rope pegged to the ground comes up and is already bent over into a hook (its
+ * short end hangs down beside it); the gold rope hangs straight from above and
+ * its end is taken down behind the top of the hook, down inside it and out over
+ * its right leg, round behind both legs, then up over the left leg and out
+ * behind the top of the hook, beside itself.
+ *
+ * The shape is the verified bight-method square knot turned a quarter turn
+ * (depths unchanged, so every crossing keeps its over/under): the old bight is
+ * the red hook, the working end's bight is the gold loop round it. Each rope's
+ * two legs pass the other rope's bend on the same side — a square knot, not a granny.
  */
+const SQUARE_CENTRE: [number, number] = [0.05, 1.25];
+/** The bight-method knot's points (bight lying sideways) turned a quarter turn about its middle. */
+const turnSquare = ([x, y, z]: Point3): Point3 => [SQUARE_CENTRE[0] - (y - 1.2), SQUARE_CENTRE[1] + (x + 0.13), z];
 export const SQUARE_KNOT_PATH: KnotPath = {
   points: place([
-    [-0.85, 3.4, 0], // anchor, above the frame
-    [-0.85, 2.4, 0],
-    [-0.82, 1.65, 0], // ← tracing starts here: the rope hangs straight
-    [-0.72, 1.41, 0.1], // bight: top leg…
-    [-0.4, 1.4, -0.1],
-    [0.0, 1.4, 0],
-    [0.3, 1.38, 0.1],
-    [0.43, 1.2, 0.12], // …curve…
-    [0.3, 1.02, 0.1],
-    [0.0, 1.0, 0],
-    [-0.4, 1.0, -0.1],
-    [-0.72, 0.99, 0.1], // …lower leg
-    [-0.85, 0.78, 0.02],
-    [-0.75, 0.3, 0], // ring round the bundle
-    [-0.4, -0.02, 0.03],
-    [0.2, -0.02, 0.03],
-    [0.58, 0.28, 0],
-    [0.62, 0.7, -0.03], // up the right side
-    [0.55, 1.05, -0.08],
-    [0.3, 1.13, -0.12], // under the bight’s curve…
-    [0.0, 1.13, 0], // …along inside the bight…
-    [-0.3, 1.1, 0.06],
-    [-0.4, 0.98, 0.12], // …and over its lower leg
-    [-0.52, 0.84, 0.04],
-    [-0.66, 0.94, -0.1],
-    [-0.7, 1.2, -0.14], // round behind both legs
-    [-0.66, 1.46, -0.1],
-    [-0.52, 1.56, 0.04],
-    [-0.4, 1.42, 0.12], // over the top leg…
-    [-0.3, 1.3, 0.06],
-    [0.0, 1.27, 0],
-    [0.3, 1.27, -0.12], // …out under the curve, beside itself
-    [0.55, 1.3, -0.08],
-    [0.75, 1.1, -0.02],
-    [0.78, 0.6, 0],
-    [0.78, 0.1, 0], // working end hangs beside the ring
+    // Red rope: pegged to the ground, up its right leg, over the top of the hook, down its left leg.
+    [0.26, -0.66, 0], // at the stake
+    [0.26, -0.1, 0],
+    [0.26, 0.4, 0.05],
+    ...(
+      [
+        [-0.72, 0.99, 0.1],
+        [-0.4, 1.0, -0.1],
+        [0.0, 1.0, 0],
+        [0.3, 1.02, 0.1],
+        [0.43, 1.2, 0.12], // top of the hook
+        [0.3, 1.38, 0.1],
+        [0.0, 1.4, 0],
+        [-0.4, 1.4, -0.1],
+        [-0.72, 1.41, 0.1],
+      ] as Point3[]
+    ).map(turnSquare),
+    [-0.16, 0.42, 0.05],
+    [-0.17, 0.2, 0], // its short end hangs down
+    // Never drawn: carries the curve round behind, well clear, to the gold rope.
+    [-0.18, -0.05, -0.1],
+    [-1.6, -0.1, -2],
+    [-1.6, 3.5, -2],
+    // Gold rope: straight down from above, then the traced end.
+    [0.2, 3.4, 0], // anchor, above the frame
+    [0.2, 2.6, 0],
+    [0.2, 2.2, -0.03], // ← tracing starts here: the gold rope hangs straight
+    ...(
+      [
+        [0.55, 1.05, -0.08],
+        [0.3, 1.13, -0.12], // behind the top of the hook…
+        [0.0, 1.13, 0], // …down inside it…
+        [-0.3, 1.1, 0.06],
+        [-0.4, 0.98, 0.12], // …and out over its right leg
+        [-0.52, 0.84, 0.04],
+        [-0.66, 0.94, -0.1],
+        [-0.7, 1.2, -0.14], // round behind both legs
+        [-0.66, 1.46, -0.1],
+        [-0.52, 1.56, 0.04],
+        [-0.4, 1.42, 0.12], // up over the left leg…
+        [-0.3, 1.3, 0.06],
+        [0.0, 1.27, 0],
+        [0.3, 1.27, -0.12], // …out behind the top of the hook
+        [0.55, 1.3, -0.08],
+      ] as Point3[]
+    ).map(turnSquare),
+    [-0.07, 2.2, -0.04],
+    [-0.08, 2.45, 0], // working end, up beside the standing part
   ]),
-  traceFrom: 2,
-  stepEnds: [11, 17, 22, 27, 35],
-  knotFrom: 2,
-  tailFrom: 34,
-  hold: [12, 17],
+  traceFrom: 19,
+  stepEnds: [24, 29, 36],
+  knotFrom: 19,
+  tailFrom: 35,
+  bodies: [
+    [2, 13],
+    [19, 35],
+  ],
+  partner: { end: 13, start: 17, stake: place([[0.26, -0.66, 0]])[0] },
 };
 
 /**

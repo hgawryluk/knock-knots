@@ -388,9 +388,18 @@ export function verifyKnot(knot: KnotDefinition, path: RopePath, tightness: numb
     case 'figure-eight':
       jones('rope', 0, end, 'figure-eight');
       break;
-    case 'square-knot':
-      jones('rope', 0, end, 'square knot');
+    case 'square-knot': {
+      // Two ropes: join the two working ends over everything, and the two standing ends
+      // round the outside — the same pairing as a single rope tied round a bundle.
+      const gold = frontView(path, tightness, Math.ceil(path.mainStart), end);
+      const red = frontView(path, tightness, 0, Math.floor(path.partnerEnd)).reverse();
+      const goldTail = gold[gold.length - 1];
+      const redTail = red[0];
+      const curve: P2[] = [...gold, [goldTail[0], goldTail[1], 1e3], [redTail[0], redTail[1], 1e3], ...red];
+      const got = identify(jonesOf(closedOver(curve)));
+      results.push({ check: 'the two ropes make a square knot', ok: got === 'square knot', detail: got });
       break;
+    }
     case 'overhand-noose': {
       jones('whole rope (slips free)', 0, end, 'unknot');
       const bottom = Math.round(path.traceFrom);

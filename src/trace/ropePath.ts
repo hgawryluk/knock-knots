@@ -13,6 +13,9 @@ export class RopePath {
   readonly sampleCount = SAMPLES;
   readonly traceFrom: number;
   readonly stepEnds: number[];
+  /** Knots in two ropes: the second rope is samples 0..partnerEnd (-1 if none); the main rope starts at mainStart. */
+  readonly partnerEnd: number;
+  readonly mainStart: number;
   private readonly loose: Float32Array;
   /** Loose knot first, snug knot last. */
   private readonly frames: Float32Array[];
@@ -37,7 +40,10 @@ export class RopePath {
     this.stepEnds = path.stepEnds.map(sampleOf);
 
     const hold = path.hold && ([sampleOf(path.hold[0]), sampleOf(path.hold[1])] as [number, number]);
-    this.frames = tightenKnot(this.loose, SAMPLES, ropeRadius, sampleOf(path.knotFrom), sampleOf(path.tailFrom), hold, path.rail);
+    const bodies = (path.bodies ?? [[path.knotFrom, path.tailFrom]]).map(([from, to]) => [sampleOf(from), sampleOf(to)] as [number, number]);
+    this.frames = tightenKnot(this.loose, SAMPLES, ropeRadius, bodies, hold, path.rail);
+    this.partnerEnd = path.partner ? sampleOf(path.partner.end) : -1;
+    this.mainStart = path.partner ? sampleOf(path.partner.start) : 0;
   }
 
   /** Last sample index (the working end when fully traced). */
@@ -66,11 +72,16 @@ export class RopePath {
     return out.set(at(0), at(1), at(2));
   }
 
-  /** Writes `count` points spread evenly over the rope from the standing end to `upTo`. */
+  /** Writes `count` points spread evenly over the main rope from its standing end to `upTo`. */
   writeRope(upTo: number, tightness: number, count: number, out: Float32Array): void {
+    this.writeRange(this.mainStart, upTo, tightness, count, out);
+  }
+
+  /** Writes `count` points spread evenly over samples `from`..`to`. */
+  writeRange(from: number, to: number, tightness: number, count: number, out: Float32Array): void {
     const p = new THREE.Vector3();
     for (let j = 0; j < count; j++) {
-      this.pointAt((j / (count - 1)) * upTo, tightness, p).toArray(out, j * 3);
+      this.pointAt(from + (j / (count - 1)) * (to - from), tightness, p).toArray(out, j * 3);
     }
   }
 }

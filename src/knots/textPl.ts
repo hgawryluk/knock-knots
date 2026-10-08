@@ -27,11 +27,9 @@ export const PL_KNOTS: Record<string, { name: string; summary: string; steps?: [
     name: 'Węzeł płaski',
     summary: 'Wiąże dwa końce wokół tobołka. Nigdy nie łącz nim lin, które przenoszą obciążenie.',
     steps: [
-      ['Zrób ucho', 'Poprowadź niebieski koniec w prawo i zawróć go, składając w kształt litery U.'],
-      ['Wokół tobołka', 'Sprowadź koniec w dół i dookoła w pętlę, jakby wokół tobołka, i z powrotem w górę po prawej stronie.'],
-      ['W górę przez ucho', 'Wyprowadź koniec w górę pod łukiem ucha i nad jego dolną nitką.'],
-      ['Dookoła z tyłu', 'Poprowadź koniec za obiema nitkami ucha.'],
-      ['Z powrotem obok siebie', 'Przejdź nad górną nitką i wyjdź pod łukiem, tuż obok miejsca wejścia.'],
+      ['W dół przez hak', 'Poprowadź niebieski koniec w dół za górą czerwonego haka, w dół jego środkiem i wyprowadź nad jego prawą nogą.'],
+      ['Dookoła z tyłu', 'Przeprowadź koniec za obiema nogami haka.'],
+      ['W górę obok siebie', 'Wyprowadź go w górę nad lewą nogą i za górą haka, tuż obok miejsca wejścia.'],
     ],
   },
   'overhand-noose': {

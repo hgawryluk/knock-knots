@@ -7,6 +7,7 @@ import { END_STYLES, type EndStyle } from './rope/ropeEnd';
 import { RopeMesh } from './rope/ropeMesh';
 import type { RopeColors } from './rope/ropeTexture';
 import { HeroRope } from './scene/hero';
+import { Stake } from './scene/stake';
 import { createMeadow } from './scene/meadow';
 import { CampRail } from './scene/rail';
 import { Stage } from './scene/stage';
@@ -25,6 +26,9 @@ const ROPE_RADIUS = 0.033;
 const ROPE_POINTS = 320;
 const ROPE_COLORS: RopeColors = { strand: '#ffcf4a', groove: '#b07a12' };
 const WORKING_END_COLOR = '#2f7cf6';
+/** A second rope, for knots tied in two ropes: red, so the two are easy to tell apart. */
+const PARTNER_COLORS: RopeColors = { strand: '#f05a44', groove: '#8a2418' };
+const PARTNER_POINTS = 200;
 /** Demo pacing: path samples drawn per second, then the pull-tight and a short rest. */
 const DEMO_FPS = 30;
 const DEMO_SAMPLES_PER_SECOND = 110;
@@ -80,6 +84,21 @@ const ropePoints = new Float32Array(ROPE_POINTS * 3);
 const drawRope = (upTo: number, tightness = 0): void => {
   path.writeRope(upTo, tightness, ROPE_POINTS, ropePoints);
   rope.update(ropePoints);
+  if (path.partnerEnd >= 0) {
+    path.writeRange(0, path.partnerEnd, tightness, PARTNER_POINTS, partnerPoints);
+    partnerRope.update(partnerPoints);
+  }
+};
+
+/** The second rope (already in place) and the peg holding it, for knots tied in two ropes. */
+const partnerRope = new RopeMesh(PARTNER_POINTS, ROPE_RADIUS, PARTNER_COLORS, PARTNER_COLORS.strand);
+const partnerPoints = new Float32Array(PARTNER_POINTS * 3);
+stage.scene.add(partnerRope.object);
+const stake = new Stake();
+stage.scene.add(stake.object);
+const showPartner = (): void => {
+  partnerRope.object.visible = screen === 'trainer' && Boolean(knot.path!.partner);
+  stake.show(screen === 'trainer' ? knot.path!.partner?.stake : undefined);
 };
 
 /** The menu's opening shot ties the figure-eight. */
@@ -242,6 +261,7 @@ const selectLevel = (index: number): void => {
   knot = LEVELS[index];
   path = new RopePath(knot.path!, ROPE_RADIUS);
   rail.show(knot.path!.rail);
+  showPartner();
   timeline = timelineFor();
   panel.setKnot(knot);
   refreshLevels();
@@ -308,6 +328,7 @@ const menuCamera = (elapsed: number): void => {
 
 const openMenu = (): void => {
   screen = 'menu';
+  showPartner();
   orbitHint.hide();
   sway = -1;
   tracer.stop();
