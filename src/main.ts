@@ -238,6 +238,7 @@ window.addEventListener('keydown', (event) => {
 stage.onUpdate((dt, elapsed) => {
   if (screen === 'menu') {
     hero.update(dt);
+    landing.lightSteps(hero.stepsLit);
     menuCamera(elapsed);
     return;
   }

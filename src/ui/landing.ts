@@ -113,6 +113,11 @@ export class Landing {
     }
   }
 
+  /** Lights the first `count` of the three steps (the rope behind ties in time with them). */
+  lightSteps(count: number): void {
+    this.element.querySelectorAll('.hero-steps li').forEach((li, i) => li.classList.toggle('lit', i < count));
+  }
+
   show(): void {
     this.element.classList.remove('hidden');
     this.element.scrollTop = 0;

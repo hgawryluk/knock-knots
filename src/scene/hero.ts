@@ -17,6 +17,8 @@ const easeOut = (t: number): number => 1 - (1 - t) ** 3;
  */
 export class HeroRope {
   private time = 0;
+  /** How many of the menu's three steps the animation has reached: tying starts, half tied, pulled tight. */
+  stepsLit = 0;
 
   constructor(
     private readonly path: RopePath,
@@ -27,6 +29,7 @@ export class HeroRope {
 
   restart(): void {
     this.time = 0;
+    this.stepsLit = 0;
   }
 
   update(dt: number): void {
@@ -39,12 +42,15 @@ export class HeroRope {
     let drop = 0;
     if (t < SLIDE_SECONDS) {
       drop = SLIDE_FROM * (1 - easeOut(t / SLIDE_SECONDS));
+      this.stepsLit = 0;
     } else if ((t -= SLIDE_SECONDS) < tieSeconds) {
       upTo = path.traceFrom + (path.end - path.traceFrom) * smooth(t / tieSeconds);
+      this.stepsLit = t < tieSeconds * 0.5 ? 1 : 2;
     } else {
       upTo = path.end;
       t -= tieSeconds + PAUSE_SECONDS;
       tightness = t > 0 ? smooth(Math.min(t / TIGHTEN_SECONDS, 1)) : 0;
+      this.stepsLit = tightness > 0.5 ? 3 : 2;
     }
     path.writeRope(upTo, tightness, this.count, this.out);
     if (drop) for (let i = 1; i < this.out.length; i += 3) this.out[i] += drop;
