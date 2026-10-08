@@ -7,14 +7,15 @@ const SAMPLES = 900;
 
 /**
  * A knot path ready to draw: evenly spaced samples of the loose knot and of
- * its tightened form, plus where tracing starts and where each step ends.
+ * the frames of it drawing up snug, plus where tracing starts and where each step ends.
  */
 export class RopePath {
   readonly sampleCount = SAMPLES;
   readonly traceFrom: number;
   readonly stepEnds: number[];
   private readonly loose: Float32Array;
-  private readonly tight: Float32Array;
+  /** Loose knot first, snug knot last. */
+  private readonly frames: Float32Array[];
 
   constructor(path: KnotPath, ropeRadius: number) {
     const curve = new THREE.CatmullRomCurve3(
@@ -36,7 +37,7 @@ export class RopePath {
     this.stepEnds = path.stepEnds.map(sampleOf);
 
     const hold = path.hold && ([sampleOf(path.hold[0]), sampleOf(path.hold[1])] as [number, number]);
-    this.tight = tightenKnot(this.loose, SAMPLES, ropeRadius, sampleOf(path.knotFrom), sampleOf(path.tailFrom), hold, path.rail);
+    this.frames = tightenKnot(this.loose, SAMPLES, ropeRadius, sampleOf(path.knotFrom), sampleOf(path.tailFrom), hold, path.rail);
   }
 
   /** Last sample index (the working end when fully traced). */
@@ -44,17 +45,23 @@ export class RopePath {
     return SAMPLES;
   }
 
-  /** Point at a (fractional) sample index, blended toward the tightened knot by `tightness`. */
+  /** Point at a (fractional) sample index, `tightness` (0–1) of the way through drawing up snug. */
   pointAt(sample: number, tightness: number, out: THREE.Vector3): THREE.Vector3 {
     const s = Math.min(Math.max(sample, 0), SAMPLES);
     const i = Math.min(Math.floor(s), SAMPLES - 1);
     const f = s - i;
     const a = i * 3;
     const b = a + 3;
+    // Between the two frames either side of `tightness`.
+    const t = Math.min(Math.max(tightness, 0), 1) * (this.frames.length - 1);
+    const k = Math.min(Math.floor(t), this.frames.length - 2);
+    const from = this.frames[k];
+    const to = this.frames[k + 1];
+    const blend = t - k;
     const at = (axis: number): number => {
-      const loose = this.loose[a + axis] + (this.loose[b + axis] - this.loose[a + axis]) * f;
-      const tight = this.tight[a + axis] + (this.tight[b + axis] - this.tight[a + axis]) * f;
-      return loose + (tight - loose) * tightness;
+      const p = from[a + axis] + (from[b + axis] - from[a + axis]) * f;
+      const q = to[a + axis] + (to[b + axis] - to[a + axis]) * f;
+      return p + (q - p) * blend;
     };
     return out.set(at(0), at(1), at(2));
   }

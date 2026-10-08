@@ -203,8 +203,8 @@ const PI = Math.PI;
 export const CLOVE_HITCH_PATH: KnotPath = {
   points: place([
     [-0.09, 3.4, 0], // anchor, above the frame
-    [-0.09, 2.2, 0.02],
-    [-0.09, RAIL_Y + 0.35, 0.05],
+    [-0.09, 2.2, -0.02],
+    [-0.09, RAIL_Y + 0.3, -0.05], // comes down just behind where the diagonal will cross
     onRail(PI / 4, -0.09), // ← tracing starts here, where the rope meets the rail
     onRail(PI / 2, -0.13),
     onRail((3 * PI) / 4, -0.18),
@@ -212,11 +212,11 @@ export const CLOVE_HITCH_PATH: KnotPath = {
     onRail((5 * PI) / 4, -0.22),
     onRail((3 * PI) / 2, -0.22), // …up the back…
     onRail((7 * PI) / 4, -0.22),
-    onRail(2 * PI, -0.2), // …and over the top: one turn
-    onRail((9 * PI) / 4, -0.1, 0.1), // diagonal, over the standing part…
-    onRail((5 * PI) / 2, 0, 0.1),
-    onRail((11 * PI) / 4, 0.1, 0.1),
-    onRail(3 * PI, 0.2),
+    onRail(2 * PI, -0.2, 0.03), // …and over the top: one turn
+    onRail((9 * PI) / 4, -0.1, 0.14), // diagonal, over the standing part…
+    onRail((5 * PI) / 2, 0, 0.14),
+    onRail((11 * PI) / 4, 0.1, 0.14),
+    onRail(3 * PI, 0.2, 0.03),
     onRail((13 * PI) / 4, 0.22),
     onRail((7 * PI) / 2, 0.22), // …round again…
     onRail((15 * PI) / 4, 0.22),
