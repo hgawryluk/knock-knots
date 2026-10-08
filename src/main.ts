@@ -34,9 +34,10 @@ const REST_SECONDS = 1;
 const SWAY_DELAY = 1.1;
 const SWAY_SECONDS = 2.6;
 const SWAY_ANGLE = 0.2;
-/** Depth of field: cinematic on the menu, light in the trainer so the rope you tie stays sharp. */
+/** Depth of field: cinematic on the menu; in the trainer the rope you tie stays sharp while the far clearing (and the fire) stays soft. */
 const MENU_BLUR = 1;
 const TRAINER_BLUR = 0.3;
+const TRAINER_FAR_BLUR = 1;
 
 const container = document.getElementById('stage')!;
 const stage = new Stage(container);
@@ -332,7 +333,7 @@ const openSection = (section: SectionId): void => {
   landing.hide();
   ui.classList.remove('away');
   stage.controls.enabled = true;
-  stage.setBlur(TRAINER_BLUR);
+  stage.setBlur(TRAINER_BLUR, TRAINER_FAR_BLUR);
   panel.showSection(section);
   levelIndex = -1;
   selectLevel(index);

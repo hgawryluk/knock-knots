@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createNoise2D, createRng } from '../utils/noise';
+import { createCampfire, FIRE_AT, FIRE_CLEAR_RADIUS } from './campfire';
 import { CanopyShadow } from './canopy';
 import { loadLog, type Log } from './log';
 import { loadModel } from './models';
@@ -13,19 +14,20 @@ export interface Meadow {
   update: (dt: number, elapsed: number) => void;
 }
 
-/** Forest-floor clearing: ground, grass tufts, a scanned log lying in the grass and stones scattered round it, in dappled sun. */
+/** Forest-floor clearing: ground, grass tufts, a scanned log lying in the grass, stones scattered round it and a campfire behind, in dappled sun. */
 export async function createMeadow(scene: THREE.Scene, renderer: THREE.WebGLRenderer): Promise<Meadow> {
   scene.background = new THREE.Color(BACKGROUND);
   scene.fog = new THREE.Fog(BACKGROUND, 11, 26);
 
   const root = new THREE.Group();
-  const [log, stones] = await Promise.all([
+  const [log, stoneSource] = await Promise.all([
     // Settled into the ground a little, so it lies in the grass rather than on it.
     loadLog({ file: 'log.glb', length: 4.2, baseHeight: -0.06 }),
-    loadStones(),
+    loadModel('stone.glb'),
   ]);
   const wind = { value: 0 };
-  root.add(createGround(), createGrass(wind), ...stones);
+  const campfire = createCampfire(stoneSource);
+  root.add(createGround(), createGrass(wind), ...placeStones(stoneSource), campfire.object);
   root.add(log.object);
 
 
@@ -48,6 +50,7 @@ export async function createMeadow(scene: THREE.Scene, renderer: THREE.WebGLRend
   const update = (_dt: number, elapsed: number): void => {
     wind.value = elapsed;
     canopy.update(renderer, elapsed);
+    campfire.update(_dt, elapsed);
   };
 
   return { root, log, update };
@@ -115,6 +118,8 @@ function createGrass(wind: { value: number }): THREE.InstancedMesh {
     const x = Math.cos(angle) * radius;
     const z = Math.sin(angle) * radius;
     if (patches(x * 0.6, z * 0.6) * 0.5 + 0.5 < rng() * 0.9) continue;
+    // Nothing grows in the fire ring.
+    if (Math.hypot(x - FIRE_AT.x, z - FIRE_AT.z) < FIRE_CLEAR_RADIUS) continue;
 
     euler.set((rng() - 0.5) * 0.5, rng() * Math.PI * 2, (rng() - 0.5) * 0.5);
     quaternion.setFromEuler(euler);
@@ -131,8 +136,7 @@ function createGrass(wind: { value: number }): THREE.InstancedMesh {
 }
 
 /** Copies of the scanned stone scattered round the log — one behind it, one in front — varied in size, footprint and turn. */
-async function loadStones(): Promise<THREE.Object3D[]> {
-  const source = await loadModel('stone.glb');
+function placeStones(source: THREE.Object3D): THREE.Object3D[] {
   const box = new THREE.Box3().setFromObject(source);
   const sink = 0.04;
 

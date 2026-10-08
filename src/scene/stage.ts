@@ -90,11 +90,15 @@ export class Stage {
     this.move = { from, to: { ...view, azimuth }, t: 0, duration };
   }
 
-  /** Depth of field strength: 1 is the full cinematic blur, 0 keeps everything sharp. */
-  setBlur(amount: number): void {
+  /**
+   * Depth of field. `amount` sets how fast things blur away from the focus (1 = full
+   * cinematic, 0 = sharp); `farthest` caps how blurred the far background can get.
+   * A low amount with a full cap keeps the subject crisp but the distance soft.
+   */
+  setBlur(amount: number, farthest = amount): void {
     const uniforms = this.bokeh.uniforms as Record<string, THREE.IUniform>;
     uniforms.aperture.value = APERTURE * amount;
-    uniforms.maxblur.value = MAX_BLUR * amount;
+    uniforms.maxblur.value = MAX_BLUR * farthest;
     this.bokeh.enabled = amount > 0;
   }
 
