@@ -13,7 +13,7 @@ export interface Meadow {
   update: (dt: number, elapsed: number) => void;
 }
 
-/** Forest-floor clearing: ground, grass tufts, a scanned log lying in the grass and two stones beside it, in dappled sun. */
+/** Forest-floor clearing: ground, grass tufts, a scanned log lying in the grass and stones scattered round it, in dappled sun. */
 export async function createMeadow(scene: THREE.Scene, renderer: THREE.WebGLRenderer): Promise<Meadow> {
   scene.background = new THREE.Color(BACKGROUND);
   scene.fog = new THREE.Fog(BACKGROUND, 11, 26);
@@ -22,7 +22,7 @@ export async function createMeadow(scene: THREE.Scene, renderer: THREE.WebGLRend
   const [log, stones] = await Promise.all([
     // Settled into the ground a little, so it lies in the grass rather than on it.
     loadLog({ file: 'log.glb', length: 4.2, baseHeight: -0.06 }),
-    loadStones(0.2),
+    loadStones(),
   ]);
   const wind = { value: 0 };
   root.add(createGround(), createGrass(wind), ...stones);
@@ -130,18 +130,20 @@ function createGrass(wind: { value: number }): THREE.InstancedMesh {
   return mesh;
 }
 
-/** Two copies of the scanned stone lying near the log, varied in footprint and rotation, `topHeight` tall. */
-async function loadStones(topHeight: number): Promise<THREE.Object3D[]> {
+/** Copies of the scanned stone scattered round the log — one behind it, one in front — varied in size, footprint and turn. */
+async function loadStones(): Promise<THREE.Object3D[]> {
   const source = await loadModel('stone.glb');
   const box = new THREE.Box3().setFromObject(source);
   const sink = 0.04;
-  const heightScale = (topHeight + sink) / (box.max.y - box.min.y);
 
   const placements = [
-    { x: -1.75, z: 0.7, spread: 1.1, turn: 0.4 },
-    { x: 1.65, z: 0.55, spread: 0.9, turn: 2.3 },
+    // Behind the log, peeking out past its left end.
+    { x: -2.45, z: -0.85, height: 0.26, spread: 1.15, turn: 0.4 },
+    // In front, to the right, between the log and the rope.
+    { x: 1.25, z: 1.0, height: 0.16, spread: 0.95, turn: 2.3 },
   ];
-  return placements.map(({ x, z, spread, turn }) => {
+  return placements.map(({ x, z, height, spread, turn }) => {
+    const heightScale = (height + sink) / (box.max.y - box.min.y);
     const stone = source.clone();
     stone.scale.set(heightScale * spread, heightScale, heightScale * spread);
     stone.rotation.y = turn;
