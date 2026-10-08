@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { RopeEnd, type EndStyle } from './ropeEnd';
 import { createRopeTextures, type RopeColors } from './ropeTexture';
 
 const SUBDIVISIONS = 3;
@@ -14,6 +15,11 @@ export class RopeMesh {
   private readonly geometry = new THREE.BufferGeometry();
   private readonly rings: number;
   private readonly centers: Float32Array;
+  /** Per ring: the frame round the rope and the distance along it (shared with the end finish). */
+  private readonly normals: Float32Array;
+  private readonly binormals: Float32Array;
+  private readonly along: Float32Array;
+  private readonly end: RopeEnd;
   private readonly startCap: THREE.Mesh;
   private readonly endCap: THREE.Mesh;
 
@@ -25,6 +31,9 @@ export class RopeMesh {
   ) {
     this.rings = (particleCount - 1) * SUBDIVISIONS + 1;
     this.centers = new Float32Array(this.rings * 3);
+    this.normals = new Float32Array(this.rings * 3);
+    this.binormals = new Float32Array(this.rings * 3);
+    this.along = new Float32Array(this.rings);
 
     const vertices = this.rings * (RADIAL + 1);
     this.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices * 3), 3).setUsage(THREE.DynamicDrawUsage));
@@ -63,7 +72,15 @@ export class RopeMesh {
     );
     this.endCap.scale.set(1, 1, 1.35);
     for (const cap of [this.startCap, this.endCap]) cap.castShadow = true;
-    this.object.add(tube, this.startCap, this.endCap);
+    this.end = new RopeEnd(radius);
+    this.object.add(tube, this.startCap, this.endCap, this.end.object);
+    this.setEndStyle('cap');
+  }
+
+  /** How the working end is finished (see ropeEnd.ts). */
+  setEndStyle(style: EndStyle): void {
+    this.endCap.visible = style === 'cap';
+    this.end.setStyle(style);
   }
 
   update(positions: Float32Array): void {
@@ -75,6 +92,7 @@ export class RopeMesh {
     this.endCap.position.fromArray(c, last);
     // Elongated tip (like a whipped end) points along the rope.
     this.endCap.lookAt(c[last] * 2 - c[last - 3], c[last + 1] * 2 - c[last - 2], c[last + 2] * 2 - c[last - 1]);
+    this.end.update({ centers: c, normals: this.normals, binormals: this.binormals, along: this.along, count: this.rings });
   }
 
   /** Uniform Catmull-Rom through the particles. */
@@ -127,6 +145,9 @@ export class RopeMesh {
       // Parallel transport: remove the tangent component from the previous normal.
       frameN.addScaledVector(tangent, -frameN.dot(tangent)).normalize();
       frameB.crossVectors(tangent, frameN);
+      frameN.toArray(this.normals, i * 3);
+      frameB.toArray(this.binormals, i * 3);
+      this.along[i] = along;
 
       for (let j = 0; j <= RADIAL; j++) {
         const angle = (j / RADIAL) * Math.PI * 2;

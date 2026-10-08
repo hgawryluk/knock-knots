@@ -1,4 +1,17 @@
-import { t as tr } from '../i18n';
+import { getLang, t as tr } from '../i18n';
+
+/** Demo playback speeds the speed button cycles through. */
+const SPEEDS = [1, 1.5, 2];
+const SPEED_KEY = 'knots.demoSpeed';
+
+function loadSpeed(): number {
+  try {
+    const saved = Number(localStorage.getItem(SPEED_KEY));
+    return SPEEDS.includes(saved) ? saved : 1;
+  } catch {
+    return 1;
+  }
+}
 
 /** A demo to play: how many frames, where each knot step starts, and playback speed. */
 export interface Timeline {
@@ -46,6 +59,8 @@ export class DemoBar {
   private frame = 0;
   private time = 0;
   private playing = false;
+  private speed = loadSpeed();
+  private readonly speedButton: HTMLButtonElement;
 
   constructor(root: HTMLElement, private readonly handlers: DemoBarHandlers) {
     this.element = document.createElement('div');
@@ -58,6 +73,7 @@ export class DemoBar {
           <button type="button" class="demo-icon" data-action="previous" data-title="previousStep">${ICONS.previous}</button>
           <button type="button" class="demo-icon demo-play" data-action="play" data-title="playPause">${ICONS.play}</button>
           <button type="button" class="demo-icon" data-action="next" data-title="nextStep">${ICONS.next}</button>
+          <button type="button" class="demo-speed" data-action="speed" data-title="speed"></button>
           <div class="demo-track">
             <input class="demo-scrub" type="range" min="0" max="0" step="1" value="0" data-label="demoPosition" />
             <div class="demo-ticks" aria-hidden="true"></div>
@@ -77,6 +93,7 @@ export class DemoBar {
     this.ticks = this.element.querySelector('.demo-ticks')!;
     this.label = this.element.querySelector('.demo-label')!;
     this.watchButton = this.element.querySelector('.demo-watch-again')!;
+    this.speedButton = this.element.querySelector('.demo-speed')!;
 
     this.element.addEventListener('click', (event) => {
       const action = (event.target as HTMLElement).closest<HTMLElement>('[data-action]')?.dataset.action;
@@ -84,6 +101,7 @@ export class DemoBar {
       else if (action === 'previous') this.jumpStep(-1);
       else if (action === 'next') this.jumpStep(1);
       else if (action === 'play') this.setPlaying(!this.playing);
+      else if (action === 'speed') this.cycleSpeed();
       else if (action === 'try') handlers.onTry();
       else if (action === 'watch') handlers.onWatch();
     });
@@ -110,6 +128,7 @@ export class DemoBar {
     this.ticks.querySelectorAll<HTMLElement>('span').forEach((tick, i) => (tick.title = stepTitles[i] ?? ''));
     if (this.recording) this.showLabel();
     this.playButton.title = this.playing ? tr('pause') : tr('play');
+    this.showSpeed();
   }
 
   /** Switch to the demo player and start playing from the beginning. */
@@ -141,14 +160,15 @@ export class DemoBar {
 
   update(dt: number): void {
     if (!this.playing || !this.recording) return;
-    this.time += dt;
+    this.time += dt * this.speed;
     const frame = Math.floor(this.time * this.recording.fps);
     if (frame >= this.recording.frameCount - 1) {
       this.seek(this.recording.frameCount - 1);
       this.setPlaying(false);
       return;
     }
-    if (frame !== this.frame) this.seek(frame);
+    // Moving on a frame keeps the time between frames, so 1.5× (and uneven frame rates) run true.
+    if (frame !== this.frame) this.seek(frame, false, true);
     // Between whole frames, keep the picture moving smoothly.
     const exact = this.time * this.recording.fps;
     this.handlers.onFrame(exact, this.stepAt(frame));
@@ -163,16 +183,33 @@ export class DemoBar {
     return step;
   }
 
-  private seek(frame: number, play = false): void {
+  private seek(frame: number, play = false, keepTime = false): void {
     if (!this.recording) return;
     this.frame = Math.max(0, Math.min(frame, this.recording.frameCount - 1));
-    this.time = this.frame / this.recording.fps;
+    if (!keepTime) this.time = this.frame / this.recording.fps;
     this.scrub.value = String(this.frame);
     const step = this.stepAt(this.frame);
     const finished = this.frame >= this.recording.frameCount - 1;
     this.showLabel();
     this.handlers.onFrame(this.frame, finished ? this.stepTitles.length : step);
     if (play) this.setPlaying(true);
+  }
+
+  /** 1× → 1.5× → 2× → 1×, remembered for next time. */
+  private cycleSpeed(): void {
+    this.speed = SPEEDS[(SPEEDS.indexOf(this.speed) + 1) % SPEEDS.length];
+    try {
+      localStorage.setItem(SPEED_KEY, String(this.speed));
+    } catch {
+      // Not remembered; fine.
+    }
+    this.showSpeed();
+  }
+
+  private showSpeed(): void {
+    const text = `${this.speed}×`;
+    this.speedButton.textContent = getLang() === 'pl' ? text.replace('.', ',') : text;
+    this.speedButton.classList.toggle('fast', this.speed !== 1);
   }
 
   private showLabel(): void {

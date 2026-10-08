@@ -3,6 +3,7 @@ import './styles.css';
 import { applyDocument, knotText, onLangChange, t } from './i18n';
 import { isUnlocked, LEVELS, loadCompleted, saveCompleted, SECTIONS } from './knots/levels';
 import type { KnotDefinition, SectionId } from './knots/types';
+import { END_STYLES, type EndStyle } from './rope/ropeEnd';
 import { RopeMesh } from './rope/ropeMesh';
 import type { RopeColors } from './rope/ropeTexture';
 import { HeroRope } from './scene/hero';
@@ -61,6 +62,9 @@ let path = new RopePath(knot.path!, ROPE_RADIUS);
 // ---- Rope ---------------------------------------------------------------------------------
 
 const rope = new RopeMesh(ROPE_POINTS, ROPE_RADIUS, ROPE_COLORS, WORKING_END_COLOR);
+/** Working end finish; try others with ?end=dyed|whipped|taped|aglet|cap. */
+const endParam = new URLSearchParams(location.search).get('end');
+rope.setEndStyle(END_STYLES.includes(endParam as EndStyle) ? (endParam as EndStyle) : 'cap');
 stage.scene.add(rope.object);
 const ropePoints = new Float32Array(ROPE_POINTS * 3);
 /** Draws the rope from the standing end up to `upTo` along the path, `tightness` of the way to snug. */
@@ -333,6 +337,7 @@ if (import.meta.env.DEV) {
       path: () => path,
       mode: () => mode,
       select: selectLevel,
+      endStyle: (style: EndStyle) => rope.setEndStyle(style),
       /** Checks every finished knot against the real knot, loose and pulled tight (see knots/verify.ts). */
       verify: async () => {
         const { verifyKnot } = await import('./knots/verify');
