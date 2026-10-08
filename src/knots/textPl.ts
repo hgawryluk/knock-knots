@@ -80,7 +80,8 @@ export const PL_KNOTS: Record<string, { name: string; summary: string; steps?: [
 };
 
 export const PL_SECTIONS: Record<SectionId, { name: string; blurb: string }> = {
-  survival: { name: 'Survival', blurb: 'Podstawowe węzły, które każdy powinien znać — na biwak, do schronienia i na co dzień.' },
+  survival: { name: 'Survival', blurb:
+      'Kilka podstawowych węzłów wystarczy do większości codziennych zadań — na biwaku, nad wodą i w domu. Węzeł prosty i ósemka nie pozwalają końcowi liny się wysunąć, węzeł płaski obwiązuje tobołek, pętla zaciskowa zaciska się na tym, co obejmie, a wyblinka i pełny obrót z dwoma półsztykami mocują linę do drąga lub słupka. To fundament, na którym opierają się kolejne węzły.' },
   mountains: { name: 'Góry', blurb: 'Węzły wspinaczkowe: do wiązania się, asekuracji i zjazdu.' },
 };
 

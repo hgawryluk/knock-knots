@@ -24,7 +24,8 @@ export const OVERHAND: KnotDefinition = {
 
 /** Sections of the learning path, shown as groups in the panel. Each unlocks on its own. */
 export const SECTIONS: KnotSection[] = [
-  { id: 'survival', name: 'Survival', blurb: 'The basic knots everyone should know — for camp, shelter and everyday use.' },
+  { id: 'survival', name: 'Survival', blurb:
+      'A few basic knots cover most everyday jobs — at camp, by the water and at home. The overhand and the figure-eight stop a rope end slipping through, the square knot ties up a bundle, the noose closes round whatever it holds, and the clove hitch and the round turn with two half hitches fix a rope to a pole or post. They are the foundation the other knots build on.' },
   { id: 'mountains', name: 'Mountains', blurb: 'Climbing knots for tying in, belaying and getting back down.' },
 ];
 
