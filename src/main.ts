@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import './styles.css';
+import { applyDocument, knotText, onLangChange, t } from './i18n';
 import { isUnlocked, LEVELS, loadCompleted, saveCompleted, SECTIONS } from './knots/levels';
 import type { KnotDefinition, SectionId } from './knots/types';
 import { RopeMesh } from './rope/ropeMesh';
@@ -14,6 +15,7 @@ import { Coach } from './ui/coach';
 import { DemoBar, type Timeline } from './ui/demoBar';
 import { KnotPanel, type LevelState } from './ui/knotPanel';
 import { Landing } from './ui/landing';
+import { createLangSwitch } from './ui/langSwitch';
 import { createOverlay } from './ui/overlay';
 
 const ROPE_RADIUS = 0.033;
@@ -113,11 +115,16 @@ const refreshLevels = (): void =>
 const prompt = (step: number): void => {
   if (step >= knot.steps.length) {
     const next = LEVELS.findIndex((level, i) => i > levelIndex && level.section === knot.section && levelState(i) === 'open');
-    coach.show(`${knot.name} tied!`, next >= 0 ? `Nicely done. ${LEVELS[next].name} is unlocked above.` : 'Nicely done — more knots are on the way.', 'success');
+    coach.show(
+      t('tied', { name: knotText(knot).name }),
+      next >= 0 ? t('unlockedNext', { name: knotText(LEVELS[next]).name }) : t('moreComing'),
+      'success',
+    );
     return;
   }
-  const praise = step > 0 ? 'Nice! ' : '';
-  coach.show(`${praise}Step ${step + 1} of ${knot.steps.length} · ${knot.steps[step].title}`, knot.steps[step].hint);
+  const praise = step > 0 ? t('praise') : '';
+  const steps = knotText(knot).steps;
+  coach.show(`${praise}${t('stepOf', { n: step + 1, total: steps.length, title: steps[step].title })}`, steps[step].hint);
 };
 
 tracer.onProgress = (shown) => {
@@ -168,7 +175,7 @@ const watch = (): void => {
   resetView();
   demoBar.showWatch(
     timeline,
-    knot.steps.map((step) => step.title),
+    knotText(knot).steps.map((step) => step.title),
   );
 };
 
@@ -199,12 +206,12 @@ const demoBar = new DemoBar(ui, {
 const selectLevel = (index: number): void => {
   const level = LEVELS[index];
   if (!level.path) {
-    coach.show(`${level.name} is coming soon`, 'Its demo isn’t ready yet. Pick one of the bright knots.');
+    coach.show(t('soonTitle', { name: knotText(level).name }), t('soonText'));
     return;
   }
   if (!isUnlocked(index, completed, unlockAll)) {
     const first = LEVELS.find((earlier, i) => i < index && earlier.section === level.section && earlier.path && !completed.has(earlier.id));
-    coach.show(`${level.name} is locked`, `Tie the ${first?.name ?? 'earlier knots'} first to unlock it.`);
+    coach.show(t('lockedTitle', { name: knotText(level).name }), t('lockedText', { name: first ? knotText(first).name : t('earlierKnots') }));
     return;
   }
   levelIndex = index;
@@ -249,6 +256,7 @@ stage.onUpdate((dt, elapsed) => {
 // ---- Menu -------------------------------------------------------------------------------
 
 const landing = new Landing(document.body, SECTIONS, LEVELS, (section) => (location.hash = section));
+landing.update(completed);
 
 /** Camera follows the page: a slow drift on the hero knot, blending to the menu view as you scroll. */
 const menuCamera = (elapsed: number): void => {
@@ -299,6 +307,21 @@ const route = (): void => {
   else openMenu();
 };
 window.addEventListener('hashchange', route);
+
+// ---- Language -----------------------------------------------------------------------------
+
+applyDocument();
+createLangSwitch(document.body);
+/** Relabel everything in place; the demo, tracing and menu carry on where they are. */
+onLangChange(() => {
+  createOverlay(ui);
+  coach.hide();
+  landing.update();
+  panel.applyLanguage();
+  panel.setKnot(knot);
+  refreshLevels();
+  demoBar.applyLanguage(knotText(knot).steps.map((step) => step.title));
+});
 
 if (import.meta.env.DEV) {
   const { analyzeFreeKnot } = await import('./knots/freeKnot');

@@ -747,3 +747,42 @@ body {
     animation: none;
   }
 }
+
+/* ---- Language switch ------------------------------------------------------------------- */
+
+.lang-switch {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 3;
+  display: flex;
+  padding: 3px;
+  border: 1px solid var(--chip-border);
+  border-radius: 999px;
+  background: var(--chip);
+  backdrop-filter: blur(8px);
+}
+
+.lang-switch button {
+  min-width: 38px;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 200ms ease, color 200ms ease;
+}
+
+.lang-switch button:hover {
+  color: var(--text);
+}
+
+.lang-switch button[aria-pressed='true'] {
+  background: rgba(255, 207, 74, 0.22);
+  color: var(--text);
+}

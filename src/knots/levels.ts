@@ -64,7 +64,9 @@ export const LEVELS: KnotDefinition[] = [
     section: 'survival',
     summary: 'Ties two ends round a bundle. Never use it to join ropes that take a load.',
     steps: [
-      { title: 'Up through the bight', hint: 'Bring the blue end up from the ring, under the curve of the gold bight and over its lower leg.' },
+      { title: 'Make a bight', hint: 'Lead the blue end out to the right and fold it back on itself into a U.' },
+      { title: 'Round the bundle', hint: 'Take the end down and round in a loop, as if round a bundle, and back up the right side.' },
+      { title: 'Up through the bight', hint: 'Bring the end up under the curve of the bight and over its lower leg.' },
       { title: 'Round the back', hint: 'Take the end round behind both legs of the bight.' },
       { title: 'Back beside itself', hint: 'Come over the top leg and out under the curve, alongside where you went in.' },
     ],

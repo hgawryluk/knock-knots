@@ -1,3 +1,5 @@
+import { t as tr } from '../i18n';
+
 /** A demo to play: how many frames, where each knot step starts, and playback speed. */
 export interface Timeline {
   frameCount: number;
@@ -52,20 +54,20 @@ export class DemoBar {
       <div class="demo-watch">
         <div class="demo-label" aria-live="polite"></div>
         <div class="demo-controls">
-          <button type="button" class="demo-icon" data-action="restart" title="Restart">${ICONS.restart}</button>
-          <button type="button" class="demo-icon" data-action="previous" title="Previous step">${ICONS.previous}</button>
-          <button type="button" class="demo-icon demo-play" data-action="play" title="Play / pause (Space)">${ICONS.play}</button>
-          <button type="button" class="demo-icon" data-action="next" title="Next step">${ICONS.next}</button>
+          <button type="button" class="demo-icon" data-action="restart" data-title="restart">${ICONS.restart}</button>
+          <button type="button" class="demo-icon" data-action="previous" data-title="previousStep">${ICONS.previous}</button>
+          <button type="button" class="demo-icon demo-play" data-action="play" data-title="playPause">${ICONS.play}</button>
+          <button type="button" class="demo-icon" data-action="next" data-title="nextStep">${ICONS.next}</button>
           <div class="demo-track">
-            <input class="demo-scrub" type="range" min="0" max="0" step="1" value="0" aria-label="Demo position" />
+            <input class="demo-scrub" type="range" min="0" max="0" step="1" value="0" data-label="demoPosition" />
             <div class="demo-ticks" aria-hidden="true"></div>
           </div>
-          <button type="button" class="demo-try" data-action="try">Try it yourself</button>
+          <button type="button" class="demo-try" data-action="try" data-text="tryIt"></button>
         </div>
       </div>
       <div class="demo-tryview">
-        <span class="demo-hints">Drag the blue end along the glowing path · Drag anywhere else to look around · Scroll to zoom</span>
-        <button type="button" class="demo-watch-again" data-action="watch">Watch demo</button>
+        <span class="demo-hints" data-text="tryHints"></span>
+        <button type="button" class="demo-watch-again" data-action="watch" data-text="watchDemo"></button>
       </div>
     `;
     this.watchView = this.element.querySelector('.demo-watch')!;
@@ -95,6 +97,19 @@ export class DemoBar {
       this.setPlaying(!this.playing);
     });
     root.appendChild(this.element);
+    this.applyLanguage();
+  }
+
+  /** Labels in the current language; `stepTitles` renames the demo's steps too. */
+  applyLanguage(stepTitles = this.stepTitles): void {
+    type Key = Parameters<typeof tr>[0];
+    this.element.querySelectorAll<HTMLElement>('[data-title]').forEach((el) => (el.title = tr(el.dataset.title as Key)));
+    this.element.querySelectorAll<HTMLElement>('[data-label]').forEach((el) => el.setAttribute('aria-label', tr(el.dataset.label as Key)));
+    this.element.querySelectorAll<HTMLElement>('[data-text]').forEach((el) => (el.textContent = tr(el.dataset.text as Key)));
+    this.stepTitles = stepTitles;
+    this.ticks.querySelectorAll<HTMLElement>('span').forEach((tick, i) => (tick.title = stepTitles[i] ?? ''));
+    if (this.recording) this.showLabel();
+    this.playButton.title = this.playing ? tr('pause') : tr('play');
   }
 
   /** Switch to the demo player and start playing from the beginning. */
@@ -155,11 +170,18 @@ export class DemoBar {
     this.scrub.value = String(this.frame);
     const step = this.stepAt(this.frame);
     const finished = this.frame >= this.recording.frameCount - 1;
-    this.label.textContent = finished
-      ? 'Done — now try it yourself'
-      : `Step ${step + 1} of ${this.stepTitles.length} · ${this.stepTitles[step]}`;
+    this.showLabel();
     this.handlers.onFrame(this.frame, finished ? this.stepTitles.length : step);
     if (play) this.setPlaying(true);
+  }
+
+  private showLabel(): void {
+    if (!this.recording) return;
+    const step = this.stepAt(this.frame);
+    this.label.textContent =
+      this.frame >= this.recording.frameCount - 1
+        ? tr('demoDone')
+        : tr('stepOf', { n: step + 1, total: this.stepTitles.length, title: this.stepTitles[step] });
   }
 
   private jumpStep(direction: 1 | -1): void {
@@ -177,6 +199,6 @@ export class DemoBar {
     if (playing && this.recording && this.frame >= this.recording.frameCount - 1) this.seek(0);
     this.playing = playing && !!this.recording;
     this.playButton.innerHTML = this.playing ? ICONS.pause : ICONS.play;
-    this.playButton.title = this.playing ? 'Pause (Space)' : 'Play (Space)';
+    this.playButton.title = this.playing ? tr('pause') : tr('play');
   }
 }

@@ -1,3 +1,4 @@
+import { knotText, sectionText, t } from '../i18n';
 import type { KnotDefinition, KnotSection, SectionId } from '../knots/types';
 
 export type LevelState = 'done' | 'open' | 'locked' | 'soon';
@@ -9,6 +10,8 @@ export type LevelState = 'done' | 'open' | 'locked' | 'soon';
 export class KnotPanel {
   private readonly levelButtons: HTMLButtonElement[];
   private readonly rows = new Map<SectionId, HTMLElement>();
+  private readonly panel: HTMLElement;
+  private readonly sections: KnotSection[];
   private readonly type: HTMLElement;
   private readonly name: HTMLElement;
   private readonly summary: HTMLElement;
@@ -30,14 +33,14 @@ export class KnotPanel {
     const panel = document.createElement('section');
     panel.className = 'knot-panel';
     panel.innerHTML = `
-      <button class="knot-menu" type="button" title="Back to the menu">‹ Menu</button>
-      <nav class="knot-levels" aria-label="Knots"></nav>
+      <button class="knot-menu" type="button"></button>
+      <nav class="knot-levels"></nav>
       <div class="knot-type"></div>
       <h1 class="knot-name"></h1>
       <p class="knot-summary"></p>
       <ol class="knot-steps"></ol>
       <div class="knot-status" aria-live="polite"></div>
-      <button class="knot-reset" type="button" title="Reset rope (R)">Reset</button>
+      <button class="knot-reset" type="button"></button>
     `;
     const nav = panel.querySelector('.knot-levels')!;
     this.levelButtons = [];
@@ -45,7 +48,6 @@ export class KnotPanel {
       const row = document.createElement('div');
       row.className = 'knot-section';
       row.innerHTML = `<span class="knot-section-name"></span><div class="knot-section-levels"></div>`;
-      row.querySelector('.knot-section-name')!.textContent = section.name;
       const buttons = row.querySelector('.knot-section-levels')!;
       levels.forEach((level, index) => {
         if (level.section !== section.id) return;
@@ -58,6 +60,7 @@ export class KnotPanel {
         this.levelButtons[index] = button;
       });
       nav.appendChild(row);
+      row.dataset.section = section.id;
       this.rows.set(section.id, row);
     }
     this.type = panel.querySelector('.knot-type')!;
@@ -68,6 +71,21 @@ export class KnotPanel {
     panel.querySelector('.knot-reset')!.addEventListener('click', onReset);
     panel.querySelector('.knot-menu')!.addEventListener('click', onMenu);
     root.appendChild(panel);
+    this.panel = panel;
+    this.sections = sections;
+    this.applyLanguage();
+  }
+
+  /** Fixed labels in the current language (the knot itself is redrawn by setKnot / setLevels). */
+  applyLanguage(): void {
+    const menu = this.panel.querySelector<HTMLElement>('.knot-menu')!;
+    menu.textContent = t('menu');
+    menu.title = t('menuTitle');
+    const reset = this.panel.querySelector<HTMLElement>('.knot-reset')!;
+    reset.textContent = t('reset');
+    reset.title = t('resetTitle');
+    this.panel.querySelector('.knot-levels')!.setAttribute('aria-label', t('knots'));
+    for (const section of this.sections) this.rows.get(section.id)!.querySelector('.knot-section-name')!.textContent = sectionText(section).name;
   }
 
   /** Shows only one section's knots. */
@@ -81,8 +99,8 @@ export class KnotPanel {
       button.className = `knot-level ${state}${index === selected ? ' selected' : ''}`;
       // Still clickable, so a locked knot can say what unlocks it.
       button.setAttribute('aria-disabled', String(state === 'locked' || state === 'soon'));
-      const note = state === 'soon' ? ' — coming soon' : state === 'locked' ? ' — tie the earlier knots in this section first' : state === 'done' ? ' — tied' : '';
-      button.title = `${levels[index].name}${note}`;
+      const note = state === 'soon' ? t('noteSoon') : state === 'locked' ? t('noteLocked') : state === 'done' ? t('noteTied') : '';
+      button.title = `${knotText(levels[index]).name}${note}`;
       button.setAttribute('aria-label', button.title);
       button.setAttribute('aria-current', index === selected ? 'true' : 'false');
     });
@@ -90,11 +108,12 @@ export class KnotPanel {
 
   setKnot(knot: KnotDefinition): void {
     this.knot = knot;
-    this.type.textContent = knot.type;
-    this.name.textContent = knot.name;
-    this.summary.textContent = knot.summary;
+    const text = knotText(knot);
+    this.type.textContent = text.type;
+    this.name.textContent = text.name;
+    this.summary.textContent = text.summary;
     this.steps.replaceChildren();
-    this.items = knot.steps.map((step) => {
+    this.items = text.steps.map((step) => {
       const li = document.createElement('li');
       li.innerHTML = `<span class="step-title"></span><span class="step-hint"></span>`;
       li.querySelector('.step-title')!.textContent = step.title;
@@ -116,7 +135,7 @@ export class KnotPanel {
       li.classList.toggle('current', i === completed);
     });
     const tied = announce && completed >= this.knot.steps.length;
-    this.status.textContent = tied ? `${this.knot.name} tied!` : '';
+    this.status.textContent = tied ? t('tied', { name: knotText(this.knot).name }) : '';
     this.status.classList.toggle('visible', tied);
   }
 }

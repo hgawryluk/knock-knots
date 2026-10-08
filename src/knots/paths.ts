@@ -82,13 +82,14 @@ export const FIGURE_EIGHT_PATH: KnotPath = {
  * ring, under the bight's curve and over its lower leg, round behind both legs,
  * then back over the top leg and out under the curve beside itself. Each end's
  * two legs pass the other bight on the same side: that is what makes it a
- * square knot and not a granny.
+ * square knot and not a granny. Tracing starts from the plain hanging rope:
+ * you fold the bight and lead the ring round too.
  */
 export const SQUARE_KNOT_PATH: KnotPath = {
   points: place([
     [-0.85, 3.4, 0], // anchor, above the frame
     [-0.85, 2.4, 0],
-    [-0.82, 1.65, 0],
+    [-0.82, 1.65, 0], // ← tracing starts here: the rope hangs straight
     [-0.72, 1.41, 0.1], // bight: top leg…
     [-0.4, 1.4, -0.1],
     [0.0, 1.4, 0],
@@ -103,7 +104,7 @@ export const SQUARE_KNOT_PATH: KnotPath = {
     [-0.4, -0.02, 0.03],
     [0.2, -0.02, 0.03],
     [0.58, 0.28, 0],
-    [0.62, 0.7, -0.03], // ← tracing starts here
+    [0.62, 0.7, -0.03], // up the right side
     [0.55, 1.05, -0.08],
     [0.3, 1.13, -0.12], // under the bight’s curve…
     [0.0, 1.13, 0], // …along inside the bight…
@@ -123,8 +124,8 @@ export const SQUARE_KNOT_PATH: KnotPath = {
     [0.78, 0.6, 0],
     [0.78, 0.1, 0], // working end hangs beside the ring
   ]),
-  traceFrom: 17,
-  stepEnds: [22, 27, 35],
+  traceFrom: 2,
+  stepEnds: [11, 17, 22, 27, 35],
   knotFrom: 2,
   tailFrom: 34,
   hold: [12, 17],
@@ -134,25 +135,26 @@ export const SQUARE_KNOT_PATH: KnotPath = {
  * Simple overhand noose: the rope comes down, hangs as a loop, and its end
  * comes back up and ties an overhand knot round the standing part, so pulling
  * the standing part slides it through the knot and closes the loop. The knot
- * is the overhand's shape turned upside down, with the standing part threaded
- * through its loop (over the top, under the bottom).
+ * is the overhand's shape turned upside down, with the straight standing part
+ * threaded through its loop (the loop passes behind it at the top, in front at
+ * the bottom).
  */
 export const OVERHAND_NOOSE_PATH: KnotPath = {
   points: place([
     [-0.3, 3.4, 0], // anchor, above the frame
-    [-0.3, 2.5, 0.05],
-    [-0.3, 1.85, 0.22],
-    [-0.3, 1.53, 0.28], // standing part passes over the top of the knot's loop…
-    [-0.3, 1.12, 0.02],
-    [-0.3, 0.72, -0.16], // …and under its bottom
-    [-0.3, 0.3, -0.05],
+    [-0.3, 2.5, 0],
+    [-0.3, 1.85, 0],
+    [-0.3, 1.53, 0], // the standing part hangs straight: the knot's loop passes behind it at the top…
+    [-0.3, 1.12, 0],
+    [-0.3, 0.72, 0], // …and in front of it at the bottom
+    [-0.3, 0.3, 0], // ← tracing starts here, from the straight rope
     [-0.22, -0.12, 0],
-    [0.05, -0.3, 0], // ← tracing starts here, at the bottom of the noose
+    [0.05, -0.3, 0], // bottom of the noose
     [0.28, -0.1, 0],
     [0.3, 0.25, -0.02],
     [0.28, 0.95, -0.03],
-    [0.1, 1.58, 0], // up, behind the standing part…
-    [-0.38, 1.52, 0.05],
+    [0.1, 1.58, -0.08], // up, behind the standing part…
+    [-0.38, 1.52, -0.12],
     [-0.52, 1.05, 0.1],
     [-0.22, 0.62, 0.14],
     [0.3, 0.84, 0.17], // …round its left side and over itself: the loop is made
@@ -167,7 +169,7 @@ export const OVERHAND_NOOSE_PATH: KnotPath = {
     [0.32, 2.28, 0.02],
     [0.45, 2.08, 0], // working end flops over
   ]),
-  traceFrom: 8,
+  traceFrom: 6,
   stepEnds: [16, 20, 26],
   knotFrom: 2,
   tailFrom: 24,
@@ -204,8 +206,8 @@ export const CLOVE_HITCH_PATH: KnotPath = {
   points: place([
     [-0.09, 3.4, 0], // anchor, above the frame
     [-0.09, 2.2, -0.02],
-    [-0.09, RAIL_Y + 0.3, -0.05], // comes down just behind where the diagonal will cross
-    onRail(PI / 4, -0.09), // ← tracing starts here, where the rope meets the rail
+    [-0.09, RAIL_Y + 0.3, -0.05], // ← tracing starts here, just above the rail (comes down behind where the diagonal will cross)
+    onRail(PI / 4, -0.09),
     onRail(PI / 2, -0.13),
     onRail((3 * PI) / 4, -0.18),
     onRail(PI, -0.22), // under…
@@ -228,7 +230,7 @@ export const CLOVE_HITCH_PATH: KnotPath = {
     [0.09, 0.3, -0.02],
     [0.09, -0.1, 0], // working end hangs down
   ]),
-  traceFrom: 3,
+  traceFrom: 2,
   stepEnds: [10, 18, 24],
   knotFrom: 2,
   tailFrom: 23,

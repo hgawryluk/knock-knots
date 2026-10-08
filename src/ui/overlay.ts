@@ -1,10 +1,13 @@
-/** Small brand mark in the corner. */
+import { t } from '../i18n';
+
+/** Small brand mark in the corner; call again to relabel it after a language change. */
 export function createOverlay(root: HTMLElement): void {
-  root.innerHTML = `
-    <div class="brand">
-      <span class="brand-name">Knots</span>
-      <span class="brand-sep">·</span>
-      <span class="brand-sub">Survival</span>
-    </div>
-  `;
+  let brand = root.querySelector<HTMLElement>('.brand');
+  if (!brand) {
+    brand = document.createElement('div');
+    brand.className = 'brand';
+    brand.innerHTML = `<span class="brand-name"></span>`;
+    root.prepend(brand);
+  }
+  brand.querySelector('.brand-name')!.textContent = t('title');
 }

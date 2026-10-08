@@ -1,3 +1,4 @@
+import { knotCount, knotText, sectionText, t } from '../i18n';
 import type { KnotDefinition, KnotSection, SectionId } from '../knots/types';
 
 /**
@@ -9,6 +10,7 @@ import type { KnotDefinition, KnotSection, SectionId } from '../knots/types';
 export class Landing {
   readonly element: HTMLElement;
   private readonly cards = new Map<SectionId, HTMLElement>();
+  private completed = new Set<string>();
 
   constructor(
     root: HTMLElement,
@@ -21,13 +23,13 @@ export class Landing {
     this.element.innerHTML = `
       <section class="hero">
         <div class="hero-text">
-          <h1 class="hero-title">Knots</h1>
-          <p class="hero-tag">The knots that matter, outdoors and on the mountain. Watch each one tie itself, then tie it yourself.</p>
+          <h1 class="hero-title"></h1>
+          <p class="hero-tag"></p>
         </div>
-        <button class="hero-scroll" type="button">Choose your knots<span class="hero-chevron" aria-hidden="true"></span></button>
+        <button class="hero-scroll" type="button"><span class="hero-scroll-text"></span><span class="hero-chevron" aria-hidden="true"></span></button>
       </section>
-      <section class="paths" aria-label="Choose your knots">
-        <h2 class="paths-title">Where are you heading?</h2>
+      <section class="paths">
+        <h2 class="paths-title"></h2>
         <div class="path-cards"></div>
       </section>
     `;
@@ -42,8 +44,6 @@ export class Landing {
         <ul class="path-knots"></ul>
         <span class="path-go"></span>
       `;
-      card.querySelector('.path-name')!.textContent = section.name;
-      card.querySelector('.path-blurb')!.textContent = section.blurb;
       card.addEventListener('click', () => {
         if (card.getAttribute('aria-disabled') !== 'true') onChoose(section.id);
       });
@@ -65,29 +65,41 @@ export class Landing {
     return !this.element.classList.contains('hidden');
   }
 
-  /** Fills each card: the knots ready to learn (ticked when tied) and how many more are coming. */
-  update(completed: Set<string>): void {
+  /** Fills the page in the current language: each card lists the knots ready to learn (ticked when tied) and how many more are coming. */
+  update(completed: Set<string> = this.completed): void {
+    this.completed = completed;
+    const set = (selector: string, text: string): void => {
+      this.element.querySelector(selector)!.textContent = text;
+    };
+    set('.hero-title', t('title'));
+    set('.hero-tag', t('heroTag'));
+    set('.hero-scroll-text', t('chooseKnots'));
+    set('.paths-title', t('pathsTitle'));
+    this.element.querySelector('.paths')!.setAttribute('aria-label', t('chooseKnots'));
     for (const section of this.sections) {
       const card = this.cards.get(section.id)!;
+      const text = sectionText(section);
+      card.querySelector('.path-name')!.textContent = text.name;
+      card.querySelector('.path-blurb')!.textContent = text.blurb;
       const knots = this.levels.filter((level) => level.section === section.id);
       const ready = knots.filter((level) => level.path);
       const tied = ready.filter((level) => completed.has(level.id)).length;
       const coming = knots.length - ready.length;
       card.querySelector('.path-count')!.textContent = ready.length
-        ? `${ready.length} knots${tied ? ` · ${tied} tied` : ''}`
-        : 'Coming soon';
+        ? `${knotCount(ready.length)}${tied ? ` · ${t('tiedCount', { n: tied })}` : ''}`
+        : t('comingSoon');
       const items = (ready.length ? ready : knots).map((level) => {
         const li = document.createElement('li');
-        li.textContent = level.name;
+        li.textContent = knotText(level).name;
         li.classList.toggle('tied', completed.has(level.id));
         return li;
       });
       card.querySelector('.path-knots')!.replaceChildren(...items);
       card.querySelector('.path-go')!.textContent = ready.length
         ? coming
-          ? `Start · ${coming} more on the way`
-          : 'Start'
-        : 'In the works';
+          ? t('startMore', { n: coming })
+          : t('start')
+        : t('inTheWorks');
       card.setAttribute('aria-disabled', String(!ready.length));
       card.classList.toggle('soon', !ready.length);
     }
