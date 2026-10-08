@@ -633,7 +633,7 @@ body {
   font-size: 13px;
   cursor: pointer;
   /* Appears once the knot is pulled tight and all three steps are lit. */
-  animation: scroll-in 900ms 6400ms ease both;
+  animation: scroll-in 900ms 5900ms ease both;
 }
 
 .hero-scroll:hover {
