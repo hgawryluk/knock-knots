@@ -17,6 +17,7 @@ import { DemoBar, type Timeline } from './ui/demoBar';
 import { KnotPanel, type LevelState } from './ui/knotPanel';
 import { Landing } from './ui/landing';
 import { createLangSwitch } from './ui/langSwitch';
+import { OrbitHint } from './ui/orbitHint';
 import { createOverlay } from './ui/overlay';
 
 const ROPE_RADIUS = 0.033;
@@ -29,6 +30,10 @@ const DEMO_FPS = 30;
 const DEMO_SAMPLES_PER_SECOND = 110;
 const TIGHTEN_SECONDS = 1.2;
 const REST_SECONDS = 1;
+/** When you start tying yourself, the view turns gently to one side and back, to show it can be turned. */
+const SWAY_DELAY = 1.1;
+const SWAY_SECONDS = 2.6;
+const SWAY_ANGLE = 0.2;
 
 const container = document.getElementById('stage')!;
 const stage = new Stage(container);
@@ -94,6 +99,11 @@ rail.show(knot.path!.rail);
 const ui = document.getElementById('ui')!;
 createOverlay(ui);
 const coach = new Coach(ui);
+const orbitHint = new OrbitHint(ui, stage.controls);
+/** Seconds into the gentle sway shown when trying starts; -1 when not swaying. */
+let sway = -1;
+// Touching the view yourself ends the sway.
+stage.controls.addEventListener('start', () => (sway = -1));
 
 /** The main menu, or learning the knots of one section. */
 let screen: 'menu' | 'trainer' = 'menu';
@@ -132,6 +142,8 @@ const prompt = (step: number): void => {
 };
 
 tracer.onProgress = (shown) => {
+  // Never move the view while the rope is being traced.
+  if (shown > path.traceFrom + 1) sway = -1;
   drawRope(shown);
   const step = stepAt(shown);
   panel.setProgress(Math.min(step, knot.steps.length - 1), false);
@@ -173,6 +185,8 @@ let timeline = timelineFor();
 
 const watch = (): void => {
   mode = 'watch';
+  orbitHint.hide();
+  sway = -1;
   tracer.stop();
   tightening = -1;
   coach.hide();
@@ -190,6 +204,8 @@ const tryIt = (): void => {
   demoBar.showTry(true);
   resetView();
   tracer.start(path);
+  orbitHint.show();
+  sway = orbitHint.done || matchMedia('(prefers-reduced-motion: reduce)').matches ? -1 : 0;
 };
 
 const demoBar = new DemoBar(ui, {
@@ -251,6 +267,16 @@ stage.onUpdate((dt, elapsed) => {
     return;
   }
   tracer.update(dt);
+  if (sway >= 0) {
+    sway += dt;
+    const s = sway - SWAY_DELAY;
+    if (s >= SWAY_SECONDS) {
+      sway = -1;
+      stage.setView(KNOT_VIEW);
+    } else if (s > 0) {
+      stage.setView({ ...KNOT_VIEW, azimuth: KNOT_VIEW.azimuth + SWAY_ANGLE * Math.sin((2 * Math.PI * s) / SWAY_SECONDS) });
+    }
+  }
   if (tightening >= 0 && tightening < 1) {
     tightening = Math.min(tightening + dt / TIGHTEN_SECONDS, 1);
     drawRope(path.end, tightening * tightening * (3 - 2 * tightening));
@@ -278,6 +304,8 @@ const menuCamera = (elapsed: number): void => {
 
 const openMenu = (): void => {
   screen = 'menu';
+  orbitHint.hide();
+  sway = -1;
   tracer.stop();
   tightening = -1;
   coach.hide();
@@ -320,6 +348,7 @@ createLangSwitch(document.body);
 /** Relabel everything in place; the demo, tracing and menu carry on where they are. */
 onLangChange(() => {
   createOverlay(ui);
+  orbitHint.applyLanguage();
   coach.hide();
   landing.update();
   panel.applyLanguage();

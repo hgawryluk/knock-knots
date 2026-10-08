@@ -892,3 +892,53 @@ body {
   background: rgba(255, 207, 74, 0.22);
   color: var(--text);
 }
+
+/* ---- Rotate hint (while tying yourself) ------------------------------------------------ */
+
+.orbit-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 92px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 16px 7px 12px;
+  border: 1px solid var(--chip-border);
+  border-radius: 999px;
+  background: var(--chip);
+  backdrop-filter: blur(8px);
+  font-size: 13px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, 8px);
+  transition: opacity 400ms ease, transform 400ms ease;
+  pointer-events: none;
+}
+
+/* Arrives as the view starts its gentle sway. */
+.orbit-hint.visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  transition-delay: 900ms;
+}
+
+.orbit-icon {
+  color: #ffcf4a;
+  animation: orbit-swing 2.6s ease-in-out infinite;
+}
+
+@keyframes orbit-swing {
+  0%,
+  100% {
+    transform: translateX(-4px) rotate(-6deg);
+  }
+  50% {
+    transform: translateX(4px) rotate(6deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbit-icon {
+    animation: none;
+  }
+}
