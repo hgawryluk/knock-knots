@@ -542,6 +542,51 @@ body {
   text-shadow: 0 1px 16px rgba(0, 0, 0, 0.5);
 }
 
+/* The learning path: watch, tie it here, then for real — the last step is the point. */
+.hero-steps {
+  display: grid;
+  gap: 8px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: hero-step;
+}
+
+.hero-steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  color: rgba(242, 239, 230, 0.86);
+  text-shadow: 0 1px 16px rgba(0, 0, 0, 0.5);
+  counter-increment: hero-step;
+}
+
+.hero-steps li::before {
+  content: counter(hero-step);
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--chip-border);
+  border-radius: 50%;
+  background: var(--chip);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hero-steps li.real {
+  font-weight: 600;
+  color: #ffcf4a;
+}
+
+.hero-steps li.real::before {
+  border-color: #ffcf4a;
+  background: rgba(255, 207, 74, 0.18);
+  color: #ffcf4a;
+}
+
 .hero-scroll {
   position: absolute;
   left: 50%;

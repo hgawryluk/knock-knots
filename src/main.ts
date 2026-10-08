@@ -117,7 +117,7 @@ const prompt = (step: number): void => {
     const next = LEVELS.findIndex((level, i) => i > levelIndex && level.section === knot.section && levelState(i) === 'open');
     coach.show(
       t('tied', { name: knotText(knot).name }),
-      next >= 0 ? t('unlockedNext', { name: knotText(LEVELS[next]).name }) : t('moreComing'),
+      `${t('realLife')} ${next >= 0 ? t('unlockedNext', { name: knotText(LEVELS[next]).name }) : t('moreComing')}`,
       'success',
     );
     return;
