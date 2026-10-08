@@ -13,15 +13,16 @@ export interface Meadow {
   update: (dt: number, elapsed: number) => void;
 }
 
-/** Forest-floor clearing: ground, grass tufts, two stones and a scanned log resting on them, in dappled sun. */
+/** Forest-floor clearing: ground, grass tufts, a scanned log lying in the grass and two stones beside it, in dappled sun. */
 export async function createMeadow(scene: THREE.Scene, renderer: THREE.WebGLRenderer): Promise<Meadow> {
   scene.background = new THREE.Color(BACKGROUND);
   scene.fog = new THREE.Fog(BACKGROUND, 11, 26);
 
   const root = new THREE.Group();
   const [log, stones] = await Promise.all([
-    loadLog({ file: 'log.glb', length: 4.2, baseHeight: 0.3 }),
-    loadStones(0.31),
+    // Settled into the ground a little, so it lies in the grass rather than on it.
+    loadLog({ file: 'log.glb', length: 4.2, baseHeight: -0.06 }),
+    loadStones(0.2),
   ]);
   const wind = { value: 0 };
   root.add(createGround(), createGrass(wind), ...stones);
@@ -129,7 +130,7 @@ function createGrass(wind: { value: number }): THREE.InstancedMesh {
   return mesh;
 }
 
-/** Two copies of the scanned stone, varied in footprint and rotation, with tops at `topHeight` to carry the log. */
+/** Two copies of the scanned stone lying near the log, varied in footprint and rotation, `topHeight` tall. */
 async function loadStones(topHeight: number): Promise<THREE.Object3D[]> {
   const source = await loadModel('stone.glb');
   const box = new THREE.Box3().setFromObject(source);
@@ -137,8 +138,8 @@ async function loadStones(topHeight: number): Promise<THREE.Object3D[]> {
   const heightScale = (topHeight + sink) / (box.max.y - box.min.y);
 
   const placements = [
-    { x: -1.45, z: 0.02, spread: 1.0, turn: 0.4 },
-    { x: 1.4, z: 0.06, spread: 0.88, turn: 2.3 },
+    { x: -1.75, z: 0.7, spread: 1.1, turn: 0.4 },
+    { x: 1.65, z: 0.55, spread: 0.9, turn: 2.3 },
   ];
   return placements.map(({ x, z, spread, turn }) => {
     const stone = source.clone();
