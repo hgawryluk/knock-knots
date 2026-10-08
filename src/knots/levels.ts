@@ -24,7 +24,7 @@ export const OVERHAND: KnotDefinition = {
 
 /** Sections of the learning path, shown as groups in the panel. Each unlocks on its own. */
 export const SECTIONS: KnotSection[] = [
-  { id: 'survival', name: 'Survival', blurb: 'Camp, shelter and everyday knots for the outdoors.' },
+  { id: 'survival', name: 'Survival', blurb: 'The basic knots everyone should know — for camp, shelter and everyday use.' },
   { id: 'mountains', name: 'Mountains', blurb: 'Climbing knots for tying in, belaying and getting back down.' },
 ];
 

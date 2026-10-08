@@ -80,7 +80,7 @@ export const PL_KNOTS: Record<string, { name: string; summary: string; steps?: [
 };
 
 export const PL_SECTIONS: Record<SectionId, { name: string; blurb: string }> = {
-  survival: { name: 'Survival', blurb: 'Węzły na biwak, do schronienia i na co dzień w terenie.' },
+  survival: { name: 'Survival', blurb: 'Podstawowe węzły, które każdy powinien znać — na biwak, do schronienia i na co dzień.' },
   mountains: { name: 'Góry', blurb: 'Węzły wspinaczkowe: do wiązania się, asekuracji i zjazdu.' },
 };
 
