@@ -482,3 +482,268 @@ body {
     display: none;
   }
 }
+
+/* ---- Main menu ------------------------------------------------------------------------- */
+
+#ui {
+  transition: opacity 500ms ease;
+}
+
+#ui.away {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 400ms ease, visibility 0s 400ms;
+}
+
+.landing {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  overflow-x: hidden;
+  overflow-y: auto;
+  transition: opacity 600ms ease;
+}
+
+.landing.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 500ms ease, visibility 0s 500ms;
+}
+
+.hero {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: 0 clamp(20px, 6vw, 88px) clamp(96px, 16vh, 150px);
+}
+
+.hero-text {
+  max-width: 460px;
+  animation: hero-in 1200ms 500ms ease both;
+}
+
+.hero-title {
+  margin: 0;
+  font-size: clamp(64px, 11vw, 136px);
+  font-weight: 600;
+  line-height: 0.9;
+  letter-spacing: -0.045em;
+  text-shadow: 0 2px 40px rgba(0, 0, 0, 0.35);
+}
+
+.hero-tag {
+  margin: 18px 0 0;
+  font-size: clamp(15px, 1.5vw, 18px);
+  line-height: 1.5;
+  color: rgba(242, 239, 230, 0.86);
+  text-shadow: 0 1px 16px rgba(0, 0, 0, 0.5);
+}
+
+.hero-scroll {
+  position: absolute;
+  left: 50%;
+  bottom: 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px 10px;
+  transform: translateX(-50%);
+  border: 1px solid var(--chip-border);
+  border-radius: 999px;
+  background: var(--chip);
+  backdrop-filter: blur(8px);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  /* Appears once the knot has tied itself. */
+  animation: scroll-in 900ms 4200ms ease both;
+}
+
+.hero-scroll:hover {
+  background: rgba(40, 40, 30, 0.75);
+}
+
+.hero-chevron {
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  animation: chevron 1.8s ease-in-out infinite;
+}
+
+.paths {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: 12vh clamp(20px, 6vw, 88px) 10vh;
+  background: linear-gradient(90deg, rgba(14, 16, 10, 0.85) 0%, rgba(14, 16, 10, 0.55) 42%, rgba(14, 16, 10, 0) 72%);
+}
+
+.paths-title {
+  margin: 0 0 24px;
+  font-size: clamp(28px, 3.6vw, 44px);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.path-cards {
+  display: grid;
+  gap: 14px;
+  max-width: 520px;
+}
+
+.path-card {
+  display: block;
+  width: 100%;
+  padding: 20px 22px;
+  border: 1px solid var(--chip-border);
+  border-radius: 16px;
+  background: var(--chip);
+  backdrop-filter: blur(12px);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 200ms ease, border-color 200ms ease, background 200ms ease;
+}
+
+.path-card:hover:not(.soon),
+.path-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(255, 207, 74, 0.55);
+  background: rgba(30, 30, 22, 0.72);
+}
+
+.path-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.path-name {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.path-count {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.path-blurb {
+  margin: 6px 0 14px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.path-knots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.path-knots li {
+  padding: 4px 10px;
+  border: 1px solid var(--chip-border);
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.path-knots li.tied {
+  border-color: #6fbf73;
+  color: #8fd694;
+}
+
+.path-knots li.tied::before {
+  content: '✓ ';
+}
+
+.path-go {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffcf4a;
+}
+
+.path-card.soon {
+  cursor: default;
+}
+
+.path-card.soon .path-knots li {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.path-card.soon .path-go {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.knot-menu {
+  display: block;
+  margin: -6px 0 10px -6px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.knot-menu:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes scroll-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+}
+
+@keyframes chevron {
+  0%,
+  100% {
+    transform: translateY(-2px) rotate(45deg);
+  }
+  50% {
+    transform: translateY(2px) rotate(45deg);
+  }
+}
+
+@media (max-width: 720px) {
+  .paths {
+    background: linear-gradient(180deg, rgba(14, 16, 10, 0.4) 0%, rgba(14, 16, 10, 0.85) 30%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-chevron {
+    animation: none;
+  }
+}

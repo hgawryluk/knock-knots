@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 import './styles.css';
 import { isUnlocked, LEVELS, loadCompleted, saveCompleted, SECTIONS } from './knots/levels';
-import type { KnotDefinition } from './knots/types';
+import type { KnotDefinition, SectionId } from './knots/types';
 import { RopeMesh } from './rope/ropeMesh';
 import type { RopeColors } from './rope/ropeTexture';
+import { HeroRope } from './scene/hero';
 import { createMeadow } from './scene/meadow';
 import { CampRail } from './scene/rail';
 import { Stage } from './scene/stage';
@@ -12,6 +13,7 @@ import { Tracer } from './trace/tracer';
 import { Coach } from './ui/coach';
 import { DemoBar, type Timeline } from './ui/demoBar';
 import { KnotPanel, type LevelState } from './ui/knotPanel';
+import { Landing } from './ui/landing';
 import { createOverlay } from './ui/overlay';
 
 const ROPE_RADIUS = 0.033;
@@ -35,6 +37,9 @@ stage.onUpdate(meadow.update);
 Object.assign(stage.controls, { minDistance: 1.4, maxDistance: 7, minPolarAngle: Math.PI * 0.08, maxPolarAngle: Math.PI * 0.6 });
 const KNOT_VIEW = { target: new THREE.Vector3(0.1, 1.3, 1.9), distance: 4.6, polar: Math.PI * 0.46, azimuth: 0.15 };
 const resetView = (): void => stage.glideTo(KNOT_VIEW);
+/** Menu camera: close on the hero knot at the top of the page, drawing back and aside as the cards scroll in. */
+const HERO_VIEW = { target: new THREE.Vector3(0.05, 1.42, 1.9), distance: 2.9, polar: Math.PI * 0.47, azimuth: 0.2 };
+const MENU_VIEW = { target: new THREE.Vector3(-0.55, 1.3, 1.9), distance: 3.5, polar: Math.PI * 0.44, azimuth: 0.45 };
 
 // ---- Levels -------------------------------------------------------------------------------
 
@@ -62,6 +67,14 @@ const drawRope = (upTo: number, tightness = 0): void => {
   rope.update(ropePoints);
 };
 
+/** The menu's opening shot ties the figure-eight. */
+const hero = new HeroRope(
+  new RopePath(LEVELS.find((level) => level.id === 'figure-eight')!.path!, ROPE_RADIUS),
+  ropePoints,
+  ROPE_POINTS,
+  (points) => rope.update(points),
+);
+
 const tracer = new Tracer(stage.camera, container, stage.controls, ROPE_RADIUS);
 stage.scene.add(tracer.object);
 
@@ -76,6 +89,8 @@ const ui = document.getElementById('ui')!;
 createOverlay(ui);
 const coach = new Coach(ui);
 
+/** The main menu, or learning the knots of one section. */
+let screen: 'menu' | 'trainer' = 'menu';
 /** "watch": the knot draws itself. "try": you trace it. */
 let mode: 'watch' | 'try' = 'watch';
 /** Set when the traced knot has been pulled tight; animates 0 → 1. */
@@ -205,15 +220,20 @@ const selectLevel = (index: number): void => {
 /** Reset restarts whatever you're doing: the demo, or your tracing. */
 const reset = (): void => (mode === 'watch' ? watch() : tryIt());
 
-const panel = new KnotPanel(ui, SECTIONS, LEVELS, selectLevel, reset);
+const panel = new KnotPanel(ui, SECTIONS, LEVELS, selectLevel, reset, () => (location.hash = ''));
 panel.setKnot(knot);
 refreshLevels();
 
 window.addEventListener('keydown', (event) => {
-  if ((event.key === 'r' || event.key === 'R') && !event.repeat && !(event.target instanceof HTMLInputElement)) reset();
+  if (screen === 'trainer' && (event.key === 'r' || event.key === 'R') && !event.repeat && !(event.target instanceof HTMLInputElement)) reset();
 });
 
-stage.onUpdate((dt) => {
+stage.onUpdate((dt, elapsed) => {
+  if (screen === 'menu') {
+    hero.update(dt);
+    menuCamera(elapsed);
+    return;
+  }
   if (mode === 'watch') {
     demoBar.update(dt);
     return;
@@ -225,6 +245,60 @@ stage.onUpdate((dt) => {
     if (tightening >= 1) finishTie();
   }
 });
+
+// ---- Menu -------------------------------------------------------------------------------
+
+const landing = new Landing(document.body, SECTIONS, LEVELS, (section) => (location.hash = section));
+
+/** Camera follows the page: a slow drift on the hero knot, blending to the menu view as you scroll. */
+const menuCamera = (elapsed: number): void => {
+  const p = landing.progress;
+  const k = p * p * (3 - 2 * p);
+  const drift = Math.sin(elapsed * 0.15) * 0.12;
+  stage.setView({
+    target: HERO_VIEW.target.clone().lerp(MENU_VIEW.target, k),
+    distance: HERO_VIEW.distance + (MENU_VIEW.distance - HERO_VIEW.distance) * k,
+    polar: HERO_VIEW.polar + (MENU_VIEW.polar - HERO_VIEW.polar) * k,
+    azimuth: HERO_VIEW.azimuth + (MENU_VIEW.azimuth - HERO_VIEW.azimuth) * k + drift,
+  });
+};
+
+const openMenu = (): void => {
+  screen = 'menu';
+  tracer.stop();
+  tightening = -1;
+  coach.hide();
+  rail.show(undefined);
+  ui.classList.add('away');
+  stage.controls.enabled = false;
+  landing.update(completed);
+  landing.show();
+  hero.restart();
+};
+
+const openSection = (section: SectionId): void => {
+  const first = LEVELS.findIndex((level, i) => level.section === section && levelState(i) === 'open');
+  const index = first >= 0 ? first : LEVELS.findIndex((level) => level.section === section && level.path);
+  if (index < 0) {
+    history.replaceState(null, '', location.pathname + location.search);
+    return openMenu();
+  }
+  screen = 'trainer';
+  landing.hide();
+  ui.classList.remove('away');
+  stage.controls.enabled = true;
+  panel.showSection(section);
+  levelIndex = -1;
+  selectLevel(index);
+};
+
+/** The address says where you are (#survival), so Back returns to the menu. */
+const route = (): void => {
+  const section = SECTIONS.find((s) => `#${s.id}` === location.hash);
+  if (section) openSection(section.id);
+  else openMenu();
+};
+window.addEventListener('hashchange', route);
 
 if (import.meta.env.DEV) {
   const { analyzeFreeKnot } = await import('./knots/freeKnot');
@@ -275,6 +349,5 @@ if (import.meta.env.DEV) {
   });
 }
 
-stage.setView(KNOT_VIEW);
-watch();
+route();
 requestAnimationFrame(() => document.getElementById('fade')!.classList.add('hidden'));

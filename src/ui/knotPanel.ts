@@ -1,13 +1,14 @@
-import type { KnotDefinition, KnotSection } from '../knots/types';
+import type { KnotDefinition, KnotSection, SectionId } from '../knots/types';
 
 export type LevelState = 'done' | 'open' | 'locked' | 'soon';
 
 /**
- * Top-left card: a labelled row of numbered levels per section, then the selected knot's name,
- * live step checklist with the current hint, and a reset button.
+ * Top-left card: back to the menu, the chosen section's numbered levels, then the selected
+ * knot's name, live step checklist with the current hint, and a reset button.
  */
 export class KnotPanel {
   private readonly levelButtons: HTMLButtonElement[];
+  private readonly rows = new Map<SectionId, HTMLElement>();
   private readonly type: HTMLElement;
   private readonly name: HTMLElement;
   private readonly summary: HTMLElement;
@@ -24,10 +25,12 @@ export class KnotPanel {
     levels: KnotDefinition[],
     onSelect: (index: number) => void,
     onReset: () => void,
+    onMenu: () => void,
   ) {
     const panel = document.createElement('section');
     panel.className = 'knot-panel';
     panel.innerHTML = `
+      <button class="knot-menu" type="button" title="Back to the menu">‹ Menu</button>
       <nav class="knot-levels" aria-label="Knots"></nav>
       <div class="knot-type"></div>
       <h1 class="knot-name"></h1>
@@ -55,6 +58,7 @@ export class KnotPanel {
         this.levelButtons[index] = button;
       });
       nav.appendChild(row);
+      this.rows.set(section.id, row);
     }
     this.type = panel.querySelector('.knot-type')!;
     this.name = panel.querySelector('.knot-name')!;
@@ -62,7 +66,13 @@ export class KnotPanel {
     this.steps = panel.querySelector('.knot-steps')!;
     this.status = panel.querySelector('.knot-status')!;
     panel.querySelector('.knot-reset')!.addEventListener('click', onReset);
+    panel.querySelector('.knot-menu')!.addEventListener('click', onMenu);
     root.appendChild(panel);
+  }
+
+  /** Shows only one section's knots. */
+  showSection(id: SectionId): void {
+    for (const [section, row] of this.rows) row.hidden = section !== id;
   }
 
   setLevels(levels: KnotDefinition[], states: LevelState[], selected: number): void {

@@ -5,11 +5,13 @@ export interface KnotStep {
 
 export type KnotType = 'Stopper' | 'Loop' | 'Hitch' | 'Bend' | 'Binding';
 
-export type SectionId = 'basic' | 'climbing';
+export type SectionId = 'survival' | 'mountains';
 
 export interface KnotSection {
   id: SectionId;
   name: string;
+  /** One line for the menu card. */
+  blurb: string;
 }
 
 export type Point3 = [number, number, number];

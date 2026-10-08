@@ -1,0 +1,104 @@
+import type { KnotDefinition, KnotSection, SectionId } from '../knots/types';
+
+/**
+ * The main menu: a full-screen page over the 3D scene. First a hero (title
+ * over the rope tying itself), then, scrolling down, a card per section of
+ * knots to choose from. `progress` (0 at the top, 1 once the cards are in
+ * view) lets the scene move with the scroll.
+ */
+export class Landing {
+  readonly element: HTMLElement;
+  private readonly cards = new Map<SectionId, HTMLElement>();
+
+  constructor(
+    root: HTMLElement,
+    private readonly sections: KnotSection[],
+    private readonly levels: KnotDefinition[],
+    onChoose: (section: SectionId) => void,
+  ) {
+    this.element = document.createElement('div');
+    this.element.className = 'landing';
+    this.element.innerHTML = `
+      <section class="hero">
+        <div class="hero-text">
+          <h1 class="hero-title">Knots</h1>
+          <p class="hero-tag">The knots that matter, outdoors and on the mountain. Watch each one tie itself, then tie it yourself.</p>
+        </div>
+        <button class="hero-scroll" type="button">Choose your knots<span class="hero-chevron" aria-hidden="true"></span></button>
+      </section>
+      <section class="paths" aria-label="Choose your knots">
+        <h2 class="paths-title">Where are you heading?</h2>
+        <div class="path-cards"></div>
+      </section>
+    `;
+    const list = this.element.querySelector('.path-cards')!;
+    for (const section of sections) {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'path-card';
+      card.innerHTML = `
+        <div class="path-head"><span class="path-name"></span><span class="path-count"></span></div>
+        <p class="path-blurb"></p>
+        <ul class="path-knots"></ul>
+        <span class="path-go"></span>
+      `;
+      card.querySelector('.path-name')!.textContent = section.name;
+      card.querySelector('.path-blurb')!.textContent = section.blurb;
+      card.addEventListener('click', () => {
+        if (card.getAttribute('aria-disabled') !== 'true') onChoose(section.id);
+      });
+      list.appendChild(card);
+      this.cards.set(section.id, card);
+    }
+    this.element.querySelector('.hero-scroll')!.addEventListener('click', () =>
+      this.element.querySelector('.paths')!.scrollIntoView({ behavior: 'smooth' }),
+    );
+    root.appendChild(this.element);
+  }
+
+  /** Scroll position: 0 on the hero, 1 once the cards are in view. */
+  get progress(): number {
+    return Math.min(Math.max(this.element.scrollTop / Math.max(this.element.clientHeight * 0.8, 1), 0), 1);
+  }
+
+  get visible(): boolean {
+    return !this.element.classList.contains('hidden');
+  }
+
+  /** Fills each card: the knots ready to learn (ticked when tied) and how many more are coming. */
+  update(completed: Set<string>): void {
+    for (const section of this.sections) {
+      const card = this.cards.get(section.id)!;
+      const knots = this.levels.filter((level) => level.section === section.id);
+      const ready = knots.filter((level) => level.path);
+      const tied = ready.filter((level) => completed.has(level.id)).length;
+      const coming = knots.length - ready.length;
+      card.querySelector('.path-count')!.textContent = ready.length
+        ? `${ready.length} knots${tied ? ` · ${tied} tied` : ''}`
+        : 'Coming soon';
+      const items = (ready.length ? ready : knots).map((level) => {
+        const li = document.createElement('li');
+        li.textContent = level.name;
+        li.classList.toggle('tied', completed.has(level.id));
+        return li;
+      });
+      card.querySelector('.path-knots')!.replaceChildren(...items);
+      card.querySelector('.path-go')!.textContent = ready.length
+        ? coming
+          ? `Start · ${coming} more on the way`
+          : 'Start'
+        : 'In the works';
+      card.setAttribute('aria-disabled', String(!ready.length));
+      card.classList.toggle('soon', !ready.length);
+    }
+  }
+
+  show(): void {
+    this.element.classList.remove('hidden');
+    this.element.scrollTop = 0;
+  }
+
+  hide(): void {
+    this.element.classList.add('hidden');
+  }
+}
