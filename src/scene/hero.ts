@@ -7,8 +7,8 @@ const SLIDE_SECONDS = 1.8;
 const TIE_SAMPLES_PER_SECOND = 230;
 const PAUSE_SECONDS = 0.25;
 const TIGHTEN_SECONDS = 1.4;
-/** The menu's three steps appear one every this many seconds (the first as tying starts, the last while it pulls tight). */
-const STEP_SECONDS = 1.8;
+/** The menu's three steps light up one every this many seconds while the rope ties itself. */
+const STEP_SECONDS = 1.2;
 
 const smooth = (t: number): number => t * t * (3 - 2 * t);
 const easeOut = (t: number): number => 1 - (1 - t) ** 3;
