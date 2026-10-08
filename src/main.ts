@@ -34,6 +34,9 @@ const REST_SECONDS = 1;
 const SWAY_DELAY = 1.1;
 const SWAY_SECONDS = 2.6;
 const SWAY_ANGLE = 0.2;
+/** Depth of field: cinematic on the menu, light in the trainer so the rope you tie stays sharp. */
+const MENU_BLUR = 1;
+const TRAINER_BLUR = 0.3;
 
 const container = document.getElementById('stage')!;
 const stage = new Stage(container);
@@ -312,6 +315,7 @@ const openMenu = (): void => {
   rail.show(undefined);
   ui.classList.add('away');
   stage.controls.enabled = false;
+  stage.setBlur(MENU_BLUR);
   landing.update(completed);
   landing.show();
   hero.restart();
@@ -328,6 +332,7 @@ const openSection = (section: SectionId): void => {
   landing.hide();
   ui.classList.remove('away');
   stage.controls.enabled = true;
+  stage.setBlur(TRAINER_BLUR);
   panel.showSection(section);
   levelIndex = -1;
   selectLevel(index);

@@ -90,6 +90,14 @@ export class Stage {
     this.move = { from, to: { ...view, azimuth }, t: 0, duration };
   }
 
+  /** Depth of field strength: 1 is the full cinematic blur, 0 keeps everything sharp. */
+  setBlur(amount: number): void {
+    const uniforms = this.bokeh.uniforms as Record<string, THREE.IUniform>;
+    uniforms.aperture.value = APERTURE * amount;
+    uniforms.maxblur.value = MAX_BLUR * amount;
+    this.bokeh.enabled = amount > 0;
+  }
+
   /** Draws a frame now (also used for saving screenshots). */
   render(): void {
     // Keep whatever the camera orbits around in focus.
