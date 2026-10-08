@@ -234,3 +234,78 @@ export const CLOVE_HITCH_PATH: KnotPath = {
   tailFrom: 23,
   rail: RAIL,
 };
+
+/** Round turn & two half hitches: where the standing part hangs behind the rail, and how the hitches sit round it. */
+const RT_STANDING: [number, number] = [0, -ON_RAIL];
+const RT_AROUND = 0.095;
+/**
+ * A point on the end where it wraps round the standing part (which hangs
+ * straight down behind the rail). `angle` runs from the right (0) round the
+ * front (π/2), left (π) and back; `lift` holds it off where it crosses over rope.
+ */
+const aroundStanding = (angle: number, y: number, lift = 0): Point3 => [
+  RT_STANDING[0] + (RT_AROUND + lift) * Math.cos(angle),
+  y,
+  RT_STANDING[1] + (RT_AROUND + lift) * Math.sin(angle),
+];
+
+/**
+ * Round turn and two half hitches on the camp rail. The rope comes down behind
+ * the rail and goes round it one and a half times (the round turn), coming up
+ * the front. The end then makes two half hitches round the standing part above
+ * the rail, both turning the same way — which together are a clove hitch round
+ * the standing part: one turn, across the front over itself, a second turn, and
+ * tucked under that crossing. (Same pattern as CLOVE_HITCH_PATH, stood upright.)
+ */
+export const ROUND_TURN_TWO_HALF_HITCHES_PATH: KnotPath = (() => {
+  const hitchY = RAIL_Y + 0.55;
+  /** Like onRail, but round the standing part: `along` runs up it. */
+  const hitch = (angle: number, along: number, lift = 0): Point3 => aroundStanding(angle, hitchY + along, lift);
+  const turn: Point3[] = [];
+  for (let k = 0; k <= 12; k++) turn.push(onRail((3 * PI) / 2 - (k * PI) / 4, (k * 0.11) / 8));
+  const hitches: Point3[] = [
+    hitch(PI / 4, -0.09), // first half hitch: round the standing part…
+    hitch(PI / 2, -0.13),
+    hitch((3 * PI) / 4, -0.18),
+    hitch(PI, -0.22),
+    hitch((5 * PI) / 4, -0.22),
+    hitch((3 * PI) / 2, -0.22),
+    hitch((7 * PI) / 4, -0.22),
+    hitch(2 * PI, -0.2, 0.03),
+    hitch((9 * PI) / 4, -0.1, 0.14), // …and across the front over itself
+    hitch((5 * PI) / 2, 0, 0.14),
+    hitch((11 * PI) / 4, 0.1, 0.14), // second: round again…
+    hitch(3 * PI, 0.2, 0.03),
+    hitch((13 * PI) / 4, 0.22),
+    hitch((7 * PI) / 2, 0.22),
+    hitch((15 * PI) / 4, 0.22),
+    hitch(4 * PI, 0.22),
+    hitch((17 * PI) / 4, 0.18),
+    hitch((9 * PI) / 2, 0.13),
+    hitch((19 * PI) / 4, 0.09), // …and tucked under the crossing
+  ];
+  const points: Point3[] = [
+    [0, 3.4, -ON_RAIL], // anchor, above the frame
+    [0, 2.4, -ON_RAIL],
+    [0, RAIL_Y + 0.85, -ON_RAIL],
+    [0, RAIL_Y + 0.2, -ON_RAIL],
+    ...turn, // ← tracing starts at turn[0]: down the back, under, up the front, over, down the back, under, up the front
+    [0.165, RAIL_Y + 0.14, ON_RAIL],
+    [0.28, hitchY - 0.1, -0.05], // up wide on the right…
+    hitch(0, -0.09), // …and in round the side of the standing part, like the rope meeting the rail
+    ...hitches,
+    [-0.17, hitchY + 0.06, -0.19], // the end carries on round under the crossing…
+    [-0.3, hitchY, -0.17],
+    [-0.36, hitchY - 0.2, -0.12], // …and hangs off to the side
+  ];
+  const turnFrom = 4;
+  const hitchesFrom = turnFrom + 13 + 3;
+  return {
+    points: place(points),
+    traceFrom: turnFrom,
+    stepEnds: [turnFrom + 12, hitchesFrom + 9, points.length - 1],
+    knotFrom: 2,
+    tailFrom: points.length - 2,
+    rail: RAIL,
+  };
+})();

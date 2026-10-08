@@ -11,8 +11,9 @@ import type { Rail } from '../knots/types';
  * tail and any held stretch ease into it and keep their place, and the knot
  * can't push into them either.
  *
- * A knot tied round a rail is drawn in along the rail only, and rope lying on
- * the rail stays on it (it may slide round, but never lifts off or sinks in).
+ * A knot tied round a rail is drawn in along the rail (and rope off the rail
+ * front to back too, never up or down), and rope lying on the rail stays on it
+ * (it may slide round, but never lifts off or sinks in).
  *
  * Every frame has the same samples as the loose knot (sample i is the same bit
  * of rope), so playing through the frames shows the knot drawing up.
@@ -114,7 +115,11 @@ export function tightenKnot(
       if (w[i] <= 0 || jammed[i]) continue;
       const k = (1 - (1 - target) * w[i]) / (1 - (1 - drawn) * w[i]);
       p[i * 3] = cx + (p[i * 3] - cx) * k;
-      if (rail) continue;
+      if (rail) {
+        // Rope on the rail only slides along it; rope off it (hitches above) also draws in front to back.
+        if (railDistance[i] < 0) p[i * 3 + 2] = rail.z + (p[i * 3 + 2] - rail.z) * k;
+        continue;
+      }
       p[i * 3 + 1] = cy + (p[i * 3 + 1] - cy) * k;
       p[i * 3 + 2] = cz + (p[i * 3 + 2] - cz) * k;
     }

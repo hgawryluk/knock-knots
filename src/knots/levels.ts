@@ -1,4 +1,11 @@
-import { CLOVE_HITCH_PATH, FIGURE_EIGHT_PATH, OVERHAND_NOOSE_PATH, OVERHAND_PATH, SQUARE_KNOT_PATH } from './paths';
+import {
+  CLOVE_HITCH_PATH,
+  FIGURE_EIGHT_PATH,
+  OVERHAND_NOOSE_PATH,
+  OVERHAND_PATH,
+  ROUND_TURN_TWO_HALF_HITCHES_PATH,
+  SQUARE_KNOT_PATH,
+} from './paths';
 import type { KnotDefinition, KnotSection, KnotType, SectionId } from './types';
 
 export const OVERHAND: KnotDefinition = {
@@ -89,7 +96,19 @@ export const LEVELS: KnotDefinition[] = [
     ],
     path: CLOVE_HITCH_PATH,
   },
-  soon('round-turn-two-half-hitches', 'Round Turn & Two Half Hitches', 'Hitch', 'basic', 'A strong, easy-to-untie tie-off to a post, ring or log.'),
+  {
+    id: 'round-turn-two-half-hitches',
+    name: 'Round Turn & Two Half Hitches',
+    type: 'Hitch',
+    section: 'basic',
+    summary: 'A strong, easy-to-untie tie-off to a post, ring or log.',
+    steps: [
+      { title: 'Round turn', hint: 'Take the blue end round the rail one and a half times, coming up the front.' },
+      { title: 'First half hitch', hint: 'Lead the end across the front of the rope above the rail, round behind it, and tuck it under itself.' },
+      { title: 'Second half hitch', hint: 'Do the same again just above, turning the same way.' },
+    ],
+    path: ROUND_TURN_TWO_HALF_HITCHES_PATH,
+  },
   soon('figure-eight-loop', 'Figure-Eight Loop', 'Loop', 'basic', 'A fixed loop at the end of the rope that won’t slip.'),
   soon('bowline', 'Bowline', 'Loop', 'basic', 'A fixed loop that holds under load and still unties easily afterwards.'),
   soon('sheet-bend', 'Sheet Bend', 'Bend', 'basic', 'Joins two ropes, even when one is thicker than the other.'),
