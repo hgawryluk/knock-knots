@@ -14,7 +14,7 @@ const EMBER_RISE = 1.6;
 /**
  * A small campfire: a ring of stones, a teepee of charred sticks, soft
  * flames (crossed glowing planes with a noise shader), a few embers drifting
- * up, and a warm flickering light on the grass and the log.
+ * up, and a warm flickering light on the grass round it.
  */
 export function createCampfire(stoneSource: THREE.Object3D): { object: THREE.Group; update: (dt: number, elapsed: number) => void } {
   const object = new THREE.Group();
@@ -116,14 +116,6 @@ export function createCampfire(stoneSource: THREE.Object3D): { object: THREE.Gro
   );
   object.add(embers);
 
-  // A soft halo round the flames, like light blooming in the evening air.
-  const glow = new THREE.Sprite(
-    new THREE.SpriteMaterial({ map: glowTexture(), color: '#ff9a4a', transparent: true, opacity: 0.3, depthWrite: false, blending: THREE.AdditiveBlending }),
-  );
-  glow.scale.set(1.3, 1.1, 1);
-  glow.position.y = 0.55;
-  object.add(glow);
-
   // Warm light that flickers; no shadows, to stay cheap.
   const light = new THREE.PointLight('#ff8a3d', 2.4 * FIRE_SCALE, 7, 1.6);
   light.position.y = 0.5;
@@ -133,7 +125,6 @@ export function createCampfire(stoneSource: THREE.Object3D): { object: THREE.Gro
     flameMaterial.uniforms.uTime.value = elapsed;
     const flicker = 1 + Math.sin(elapsed * 9.1) * 0.1 + Math.sin(elapsed * 23.7) * 0.06 + Math.sin(elapsed * 3.3) * 0.08;
     light.intensity = 2.2 * FIRE_SCALE * flicker;
-    glow.material.opacity = 0.28 * flicker;
     for (let i = 0; i < EMBERS; i++) {
       const seed = emberSeeds[i];
       const t = (elapsed * (0.25 + seed * 0.2) + seed) % 1;
@@ -171,17 +162,3 @@ function emberBedTexture(): THREE.CanvasTexture {
   return texture;
 }
 
-/** Soft round falloff for the halo. */
-function glowTexture(): THREE.CanvasTexture {
-  const size = 128;
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = size;
-  const ctx = canvas.getContext('2d')!;
-  const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-  gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-  gradient.addColorStop(0.35, 'rgba(255, 255, 255, 0.35)');
-  gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, size, size);
-  return new THREE.CanvasTexture(canvas);
-}
