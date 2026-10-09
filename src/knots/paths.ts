@@ -16,8 +16,7 @@ const place = (points: Point3[]): Point3[] =>
  * crosses over the standing part, goes round behind it and comes out through
  * the loop over its lower side — over, under, over.
  */
-export const OVERHAND_PATH: KnotPath = {
-  points: place([
+const OVERHAND_POINTS: Point3[] = [
     [0.3, 3.4, 0], // anchor, above the frame
     [0.3, 2.0, 0],
     [0.28, 1.25, -0.03], // ← tracing starts here
@@ -34,11 +33,35 @@ export const OVERHAND_PATH: KnotPath = {
     [-0.12, 0.6, 0.18], // out over the lower side of the loop
     [-0.08, 0.1, 0.08],
     [-0.05, -0.4, 0.0], // working end hangs down
-  ]),
+];
+
+export const OVERHAND_PATH: KnotPath = {
+  points: place(OVERHAND_POINTS),
   traceFrom: 2,
   stepEnds: [7, 11, 15],
   knotFrom: 1,
   tailFrom: 14,
+};
+
+/** The camp tarp the knots are laid out on (world units): centre on the ground, size across and deep. */
+export const TARP = { x: 0, z: 1.75, width: 2.2, depth: 2.4, top: 0.012 };
+const FLAT_SCALE = 0.55;
+/** Authored height that lands in the middle of the tarp. */
+const FLAT_MIDDLE = 1.05;
+/**
+ * Lays an authored (hanging) knot down on the tarp: what was up runs away from
+ * the camera across the tarp, and the authored depth — which strand is over
+ * which — is kept, faintly, in the height (layOnGround turns it into real
+ * crossings: rope on the tarp, rising only over other rope).
+ */
+const layFlat = (points: Point3[]): Point3[] =>
+  points.map(([x, y, z]) => [TARP.x + x * FLAT_SCALE, TARP.top + 0.033 + z * 0.05, TARP.z - (y - FLAT_MIDDLE) * FLAT_SCALE]);
+
+/** Trial: the overhand knot tied lying on the tarp instead of hanging (open with ?flat). */
+export const OVERHAND_FLAT_PATH: KnotPath = {
+  ...OVERHAND_PATH,
+  points: layFlat(OVERHAND_POINTS),
+  flat: { ground: TARP.top },
 };
 
 

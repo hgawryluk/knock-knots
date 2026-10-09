@@ -230,12 +230,13 @@ function linkingNumber(a: P2[], b: P2[]): number {
 const STRIDE = 3;
 
 /** Front view of rope samples [from, to]: u = x, v = y, height = z (toward the camera). */
-function frontView(path: RopePath, tightness: number, from: number, to: number): P2[] {
+function frontView(path: RopePath, tightness: number, from: number, to: number, flat = false): P2[] {
   const p = new THREE.Vector3();
   const out: P2[] = [];
   for (let s = from; s <= to; s += STRIDE) {
     path.pointAt(s, tightness, p);
-    out.push([p.x, p.y, p.z]);
+    // A knot lying on the ground is read from above: height decides over and under.
+    out.push(flat ? [p.x, -p.z, p.y] : [p.x, p.y, p.z]);
   }
   return out;
 }
@@ -377,7 +378,7 @@ export function verifyKnot(knot: KnotDefinition, path: RopePath, tightness: numb
   const end = path.end;
   const results: CheckResult[] = [];
   const jones = (name: string, from: number, to: number, want: string): void => {
-    const got = identify(jonesOf(closedOver(frontView(path, tightness, from, to))));
+    const got = identify(jonesOf(closedOver(frontView(path, tightness, from, to, Boolean(knot.path?.flat)))));
     results.push({ check: `${name} is ${want}`, ok: got === want, detail: got });
   };
 

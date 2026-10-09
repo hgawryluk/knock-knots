@@ -1,13 +1,15 @@
 import * as THREE from 'three';
 import './styles.css';
 import { applyDocument, knotText, onLangChange, t } from './i18n';
-import { isUnlocked, LEVELS, loadCompleted, saveCompleted, SECTIONS } from './knots/levels';
+import { isUnlocked, LEVELS, loadCompleted, OVERHAND, saveCompleted, SECTIONS } from './knots/levels';
+import { OVERHAND_FLAT_PATH, TARP } from './knots/paths';
 import type { KnotDefinition, SectionId } from './knots/types';
 import { END_STYLES, type EndStyle } from './rope/ropeEnd';
 import { RopeMesh } from './rope/ropeMesh';
 import type { RopeColors } from './rope/ropeTexture';
 import { HeroRope } from './scene/hero';
 import { Stake } from './scene/stake';
+import { Tarp } from './scene/tarp';
 import { createMeadow } from './scene/meadow';
 import { CampRail } from './scene/rail';
 import { Stage } from './scene/stage';
@@ -45,14 +47,20 @@ const TRAINER_FAR_BLUR = 1;
 
 const container = document.getElementById('stage')!;
 const stage = new Stage(container);
-const meadow = await createMeadow(stage.scene, stage.renderer);
+/** Trial (?flat): the overhand knot tied lying on a camp tarp instead of hanging in the air. */
+const flatTrial = new URLSearchParams(location.search).has('flat');
+if (flatTrial) OVERHAND.path = OVERHAND_FLAT_PATH;
+const meadow = await createMeadow(stage.scene, stage.renderer, flatTrial ? TARP : undefined);
 stage.scene.add(meadow.root);
 stage.onUpdate(meadow.update);
 
 // Free orbit all the way round the hanging knot, from just below eye level to well above.
 Object.assign(stage.controls, { minDistance: 1.4, maxDistance: 7, minPolarAngle: Math.PI * 0.08, maxPolarAngle: Math.PI * 0.6 });
 const KNOT_VIEW = { target: new THREE.Vector3(0.1, 1.3, 1.9), distance: 4.6, polar: Math.PI * 0.46, azimuth: 0.15 };
-const resetView = (): void => stage.glideTo(KNOT_VIEW);
+/** Looking down at a knot laid out on the tarp, as if standing over it. */
+const FLAT_VIEW = { target: new THREE.Vector3(0.05, 0.05, TARP.z + 0.1), distance: 3.0, polar: Math.PI * 0.27, azimuth: 0.12 };
+const knotView = (): typeof KNOT_VIEW => (knot?.path?.flat ? FLAT_VIEW : KNOT_VIEW);
+const resetView = (): void => stage.glideTo(knotView());
 /** Menu camera: close on the hero knot at the top of the page, drawing back and aside as the cards scroll in. */
 const HERO_VIEW = { target: new THREE.Vector3(0.05, 1.42, 1.9), distance: 2.9, polar: Math.PI * 0.47, azimuth: 0.2 };
 const MENU_VIEW = { target: new THREE.Vector3(-0.55, 1.3, 1.9), distance: 3.5, polar: Math.PI * 0.44, azimuth: 0.45 };
@@ -98,9 +106,14 @@ partnerRope.setEndStyle('cut');
 stage.scene.add(partnerRope.object);
 const stake = new Stake();
 stage.scene.add(stake.object);
+const tarp = new Tarp(TARP);
+stage.scene.add(tarp.object);
 const showPartner = (): void => {
   partnerRope.object.visible = screen === 'trainer' && Boolean(knot.path!.partner);
   stake.show(screen === 'trainer' ? knot.path!.partner?.stake : undefined);
+  tarp.show(screen === 'trainer' && Boolean(knot.path!.flat));
+  // Never look from below a knot lying on the ground.
+  stage.controls.maxPolarAngle = knot.path!.flat ? Math.PI * 0.42 : Math.PI * 0.6;
 };
 
 /** The menu's opening shot ties the figure-eight. */
@@ -298,9 +311,9 @@ stage.onUpdate((dt, elapsed) => {
     const s = sway - SWAY_DELAY;
     if (s >= SWAY_SECONDS) {
       sway = -1;
-      stage.setView(KNOT_VIEW);
+      stage.setView(knotView());
     } else if (s > 0) {
-      stage.setView({ ...KNOT_VIEW, azimuth: KNOT_VIEW.azimuth + SWAY_ANGLE * Math.sin((2 * Math.PI * s) / SWAY_SECONDS) });
+      stage.setView({ ...knotView(), azimuth: knotView().azimuth + SWAY_ANGLE * Math.sin((2 * Math.PI * s) / SWAY_SECONDS) });
     }
   }
   if (tightening >= 0 && tightening < 1) {

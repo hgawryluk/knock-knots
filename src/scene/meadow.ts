@@ -15,7 +15,15 @@ export interface Meadow {
 }
 
 /** Forest-floor clearing: ground, grass tufts, a scanned log lying in the grass, stones scattered round it and a campfire behind, in dappled sun. */
-export async function createMeadow(scene: THREE.Scene, renderer: THREE.WebGLRenderer): Promise<Meadow> {
+/** An area (centre and size on the ground) to keep clear of grass, e.g. under a tarp. */
+export interface ClearArea {
+  x: number;
+  z: number;
+  width: number;
+  depth: number;
+}
+
+export async function createMeadow(scene: THREE.Scene, renderer: THREE.WebGLRenderer, clear?: ClearArea): Promise<Meadow> {
   scene.background = new THREE.Color(BACKGROUND);
   scene.fog = new THREE.Fog(BACKGROUND, 11, 26);
 
@@ -27,7 +35,7 @@ export async function createMeadow(scene: THREE.Scene, renderer: THREE.WebGLRend
   ]);
   const wind = { value: 0 };
   const campfire = createCampfire(stoneSource);
-  root.add(createGround(), createGrass(wind), ...placeStones(stoneSource), campfire.object);
+  root.add(createGround(), createGrass(wind, clear), ...placeStones(stoneSource), campfire.object);
   root.add(log.object);
 
 
@@ -69,7 +77,7 @@ function createGround(): THREE.Mesh {
 }
 
 /** Instanced blades scattered in patches; denser where the ground noise says grass. */
-function createGrass(wind: { value: number }): THREE.InstancedMesh {
+function createGrass(wind: { value: number }, clear?: ClearArea): THREE.InstancedMesh {
   const blade = new THREE.PlaneGeometry(0.035, 1, 1, 4);
   blade.translate(0, 0.5, 0);
   const position = blade.attributes.position;
@@ -120,6 +128,7 @@ function createGrass(wind: { value: number }): THREE.InstancedMesh {
     if (patches(x * 0.6, z * 0.6) * 0.5 + 0.5 < rng() * 0.9) continue;
     // Nothing grows in the fire ring.
     if (Math.hypot(x - FIRE_AT.x, z - FIRE_AT.z) < FIRE_CLEAR_RADIUS) continue;
+    if (clear && Math.abs(x - clear.x) < clear.width / 2 + 0.04 && Math.abs(z - clear.z) < clear.depth / 2 + 0.04) continue;
 
     euler.set((rng() - 0.5) * 0.5, rng() * Math.PI * 2, (rng() - 0.5) * 0.5);
     quaternion.setFromEuler(euler);

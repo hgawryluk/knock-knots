@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { KnotPath } from '../knots/types';
+import { layOnGround } from './flat';
 import { tightenKnot } from './tighten';
 
 /** Dense, evenly spaced samples along a knot path; progress is measured in sample index. */
@@ -29,6 +30,7 @@ export class RopePath {
     const points = curve.getSpacedPoints(SAMPLES);
     this.loose = new Float32Array((SAMPLES + 1) * 3);
     points.forEach((p, i) => p.toArray(this.loose, i * 3));
+    if (path.flat) layOnGround(this.loose, SAMPLES, ropeRadius, path.flat.ground);
 
     // Control point index → sample index (curve parameter → arc length fraction).
     const divisions = 2000;
@@ -41,7 +43,7 @@ export class RopePath {
 
     const hold = path.hold && ([sampleOf(path.hold[0]), sampleOf(path.hold[1])] as [number, number]);
     const bodies = (path.bodies ?? [[path.knotFrom, path.tailFrom]]).map(([from, to]) => [sampleOf(from), sampleOf(to)] as [number, number]);
-    this.frames = tightenKnot(this.loose, SAMPLES, ropeRadius, bodies, hold, path.rail);
+    this.frames = tightenKnot(this.loose, SAMPLES, ropeRadius, bodies, hold, path.rail, path.flat?.ground);
     this.partnerEnd = path.partner ? sampleOf(path.partner.end) : -1;
     this.mainStart = path.partner ? sampleOf(path.partner.start) : 0;
   }

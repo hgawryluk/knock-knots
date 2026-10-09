@@ -44,6 +44,8 @@ export interface KnotPath {
   partner?: { end: number; start: number; stake: Point3 };
   /** A pole lying along x that the knot is tied round (world units), shown as a camp rail. */
   rail?: Rail;
+  /** The knot is tied lying on a tarp whose top is at this height (world units), rather than hanging. */
+  flat?: { ground: number };
 }
 
 export interface Rail {

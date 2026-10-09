@@ -35,6 +35,8 @@ const FRAME_EVERY = 10;
 /** Strands rest a touch more than one rope diameter apart. */
 const CONTACT = 2.05;
 const SMOOTHING = 0.25;
+/** On the ground, rope sinks this many radii per step until it rests on something. */
+const SETTLE = 0.05;
 /** Push-apart passes after each small pull, so strands never sink into each other on the way. */
 const SEPARATE_PASSES = 3;
 /** Rope within this many contact distances of other rope is jammed against it. */
@@ -52,6 +54,7 @@ export function tightenKnot(
   bodies: [number, number][],
   hold?: [number, number],
   rail?: Rail,
+  ground?: number,
 ): Float32Array[] {
   // How much each sample belongs to the knot body (0 on the standing part, the tail and any held stretch; 1 inside).
   const ease = (from: number, to: number, s: number): number => {
@@ -114,6 +117,12 @@ export function tightenKnot(
       if (w[i] <= 0 || jammed[i]) continue;
       const k = (1 - (1 - target) * w[i]) / (1 - (1 - drawn) * w[i]);
       p[i * 3] = cx + (p[i * 3] - cx) * k;
+      if (ground !== undefined) {
+        // Lying on the ground: drawn in across it, and settling down onto it.
+        p[i * 3 + 2] = cz + (p[i * 3 + 2] - cz) * k;
+        p[i * 3 + 1] = Math.max(ground + radius, p[i * 3 + 1] - SETTLE * radius);
+        continue;
+      }
       if (rail) {
         // Rope on the rail only slides along it; rope off it (hitches above) also draws in front to back.
         if (railDistance[i] < 0) p[i * 3 + 2] = rail.z + (p[i * 3 + 2] - rail.z) * k;
@@ -127,6 +136,7 @@ export function tightenKnot(
     jammed.fill(0);
     for (let pass = 0; pass < SEPARATE_PASSES; pass++) separate(p, w, n, minDist, skip, jammed);
     if (rail) keepOnRail(p, n, rail, railDistance);
+    if (ground !== undefined) for (let i = 0; i < n; i++) p[i * 3 + 1] = Math.max(p[i * 3 + 1], ground + radius);
     if (iteration % FRAME_EVERY === 0) frames.push(toSamples(p, n, samples));
   }
   return frames;
