@@ -195,21 +195,19 @@ export const OVERHAND_NOOSE_PATH: KnotPath = {
     [-0.52, 1.05, 0.1],
     [-0.22, 0.62, 0.14],
     [0.3, 0.84, 0.17], // …round its left side and over itself: the loop is made
-    [0.68, 1.08, 0.08],
-    [0.72, 1.44, -0.08],
-    [0.42, 1.58, -0.18],
+    [0.55, 1.1, 0.08],
+    [0.58, 1.42, -0.08],
+    [0.36, 1.56, -0.18],
     [0.0, 1.22, -0.16], // round the back, inside the loop
     [-0.18, 1.12, 0.12],
     [-0.12, 1.6, 0.18], // out over the top of the loop
-    [-0.08, 2.05, 0.08],
-    [0.08, 2.3, 0.04],
-    [0.32, 2.28, 0.02],
-    [0.45, 2.08, 0], // working end flops over
+    [-0.1, 1.95, 0.08],
+    [-0.1, 2.2, 0.03], // working end: short and straight, up beside the standing part
   ]),
   traceFrom: 6,
-  stepEnds: [16, 20, 26],
+  stepEnds: [16, 20, 24],
   knotFrom: 2,
-  tailFrom: 24,
+  tailFrom: 23,
   hold: [6, 11],
 };
 
