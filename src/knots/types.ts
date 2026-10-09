@@ -41,7 +41,7 @@ export interface KnotPath {
    * points in between are never drawn, they just carry the curve from one rope
    * to the other well away from the knot. `stake` is where it is pegged to the ground.
    */
-  partner?: { end: number; start: number; stake: Point3 };
+  partner?: { end: number; start: number; stake?: Point3 };
   /** A pole lying along x that the knot is tied round (world units), shown as a camp rail. */
   rail?: Rail;
   /** The knot is tied lying on a tarp whose top is at this height (world units), rather than hanging. */

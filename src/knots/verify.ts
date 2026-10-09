@@ -376,9 +376,11 @@ export interface CheckResult {
 /** Checks a knot (at the given tightness: 0 loose, 1 pulled tight). */
 export function verifyKnot(knot: KnotDefinition, path: RopePath, tightness: number): CheckResult[] {
   const end = path.end;
+  // Knots lying on the tarp are read from above.
+  const flat = Boolean(knot.path?.flat);
   const results: CheckResult[] = [];
   const jones = (name: string, from: number, to: number, want: string): void => {
-    const got = identify(jonesOf(closedOver(frontView(path, tightness, from, to, Boolean(knot.path?.flat)))));
+    const got = identify(jonesOf(closedOver(frontView(path, tightness, from, to, flat))));
     results.push({ check: `${name} is ${want}`, ok: got === want, detail: got });
   };
 
@@ -392,8 +394,8 @@ export function verifyKnot(knot: KnotDefinition, path: RopePath, tightness: numb
     case 'square-knot': {
       // Two ropes: join the two working ends over everything, and the two standing ends
       // round the outside — the same pairing as a single rope tied round a bundle.
-      const gold = frontView(path, tightness, Math.ceil(path.mainStart), end);
-      const red = frontView(path, tightness, 0, Math.floor(path.partnerEnd)).reverse();
+      const gold = frontView(path, tightness, Math.ceil(path.mainStart), end, flat);
+      const red = frontView(path, tightness, 0, Math.floor(path.partnerEnd), flat).reverse();
       const goldTail = gold[gold.length - 1];
       const redTail = red[0];
       const curve: P2[] = [...gold, [goldTail[0], goldTail[1], 1e3], [redTail[0], redTail[1], 1e3], ...red];
@@ -406,8 +408,8 @@ export function verifyKnot(knot: KnotDefinition, path: RopePath, tightness: numb
       const bottom = Math.round(path.traceFrom);
       jones('working end alone', bottom + 6, end, 'trefoil');
       // Standing part closed far below and round behind; the end closed far off to the right, in front.
-      const standing = closedFarAway(frontView(path, tightness, 0, bottom - 6), [0, -1], [-1, 1], -1e3);
-      const working = closedFarAway(frontView(path, tightness, bottom + 6, end), [1, 0], [1, -1], 1e3);
+      const standing = closedFarAway(frontView(path, tightness, 0, bottom - 6, flat), [0, -1], [-1, 1], -1e3);
+      const working = closedFarAway(frontView(path, tightness, bottom + 6, end, flat), [1, 0], [1, -1], 1e3);
       const lk = linkingNumber(standing, working);
       results.push({ check: 'standing part threads the overhand once', ok: Math.abs(lk) === 1, detail: `linking number ${lk}` });
       break;

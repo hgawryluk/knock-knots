@@ -70,8 +70,7 @@ export const OVERHAND_FLAT_PATH: KnotPath = {
  * the end wraps behind the standing part above it, then comes down over the top
  * of the loop, through it, and out under its bottom — over, under, over, under.
  */
-export const FIGURE_EIGHT_PATH: KnotPath = {
-  points: place([
+const FIGURE_EIGHT_POINTS: Point3[] = [
     [0.3, 3.4, 0], // anchor, above the frame
     [0.3, 2.4, 0],
     [0.28, 1.5, -0.02], // ← tracing starts here
@@ -91,7 +90,10 @@ export const FIGURE_EIGHT_PATH: KnotPath = {
     [-0.05, 0.55, -0.22], // …and out under its bottom
     [-0.03, 0.0, -0.08],
     [0.0, -0.45, 0.0], // working end hangs down
-  ]),
+];
+
+export const FIGURE_EIGHT_PATH: KnotPath = {
+  points: place(FIGURE_EIGHT_POINTS),
   traceFrom: 2,
   stepEnds: [8, 12, 18],
   knotFrom: 1,
@@ -123,6 +125,40 @@ const roundPeg = (turn: number, rise: number): Point3 => [
 ];
 /** The bight-method knot's points (bight lying sideways) turned a quarter turn about its middle. */
 const turnSquare = ([x, y, z]: Point3): Point3 => [SQUARE_CENTRE[0] - (y - 1.2), SQUARE_CENTRE[1] + (x + 0.13), z];
+/** The red rope's hook, and the gold end's loop round it. */
+const SQUARE_HOOK: Point3[] = (
+  [
+    [-0.72, 0.99, 0.1],
+    [-0.4, 1.0, -0.1],
+    [0.0, 1.0, 0],
+    [0.3, 1.02, 0.1],
+    [0.43, 1.2, 0.12], // top of the hook
+    [0.3, 1.38, 0.1],
+    [0.0, 1.4, 0],
+    [-0.4, 1.4, -0.1],
+    [-0.72, 1.41, 0.1],
+  ] as Point3[]
+).map(turnSquare);
+const SQUARE_LOOP: Point3[] = (
+  [
+    [0.55, 1.05, -0.08],
+    [0.3, 1.13, -0.12], // behind the top of the hook…
+    [0.0, 1.13, 0], // …down inside it…
+    [-0.3, 1.1, 0.06],
+    [-0.4, 0.98, 0.12], // …and out over its right leg
+    [-0.52, 0.84, 0.04],
+    [-0.66, 0.94, -0.1],
+    [-0.7, 1.2, -0.14], // round behind both legs
+    [-0.66, 1.46, -0.1],
+    [-0.52, 1.56, 0.04],
+    [-0.4, 1.42, 0.12], // up over the left leg…
+    [-0.3, 1.3, 0.06],
+    [0.0, 1.27, 0],
+    [0.3, 1.27, -0.12], // …out behind the top of the hook
+    [0.55, 1.3, -0.08],
+  ] as Point3[]
+).map(turnSquare);
+
 export const SQUARE_KNOT_PATH: KnotPath = {
   points: place([
     // Red rope: tied round the peg's neck, up its right leg, over the top of the hook, down its left leg.
@@ -135,19 +171,7 @@ export const SQUARE_KNOT_PATH: KnotPath = {
     [0.4, -0.42, 0.06], // then up from the peg, out to the side, clear of its head
     [0.29, -0.05, 0.01],
     [0.26, 0.4, 0.05],
-    ...(
-      [
-        [-0.72, 0.99, 0.1],
-        [-0.4, 1.0, -0.1],
-        [0.0, 1.0, 0],
-        [0.3, 1.02, 0.1],
-        [0.43, 1.2, 0.12], // top of the hook
-        [0.3, 1.38, 0.1],
-        [0.0, 1.4, 0],
-        [-0.4, 1.4, -0.1],
-        [-0.72, 1.41, 0.1],
-      ] as Point3[]
-    ).map(turnSquare),
+    ...SQUARE_HOOK,
     [-0.16, 0.42, 0.05],
     [-0.17, 0.2, 0], // its short end hangs down
     // Never drawn: carries the curve round behind, well clear, to the gold rope.
@@ -158,25 +182,7 @@ export const SQUARE_KNOT_PATH: KnotPath = {
     [0.2, 3.4, 0], // anchor, above the frame
     [0.2, 2.6, 0],
     [0.2, 2.2, -0.03], // ← tracing starts here: the gold rope hangs straight
-    ...(
-      [
-        [0.55, 1.05, -0.08],
-        [0.3, 1.13, -0.12], // behind the top of the hook…
-        [0.0, 1.13, 0], // …down inside it…
-        [-0.3, 1.1, 0.06],
-        [-0.4, 0.98, 0.12], // …and out over its right leg
-        [-0.52, 0.84, 0.04],
-        [-0.66, 0.94, -0.1],
-        [-0.7, 1.2, -0.14], // round behind both legs
-        [-0.66, 1.46, -0.1],
-        [-0.52, 1.56, 0.04],
-        [-0.4, 1.42, 0.12], // up over the left leg…
-        [-0.3, 1.3, 0.06],
-        [0.0, 1.27, 0],
-        [0.3, 1.27, -0.12], // …out behind the top of the hook
-        [0.55, 1.3, -0.08],
-      ] as Point3[]
-    ).map(turnSquare),
+    ...SQUARE_LOOP,
     [-0.07, 2.2, -0.04],
     [-0.08, 2.45, 0], // working end, up beside the standing part
   ]),
@@ -199,8 +205,7 @@ export const SQUARE_KNOT_PATH: KnotPath = {
  * threaded through its loop (the loop passes behind it at the top, in front at
  * the bottom).
  */
-export const OVERHAND_NOOSE_PATH: KnotPath = {
-  points: place([
+const OVERHAND_NOOSE_POINTS: Point3[] = [
     [-0.3, 3.4, 0], // anchor, above the frame
     [-0.3, 2.5, 0],
     [-0.3, 1.85, 0],
@@ -226,7 +231,10 @@ export const OVERHAND_NOOSE_PATH: KnotPath = {
     [-0.12, 1.6, 0.18], // out over the top of the loop
     [-0.1, 1.95, 0.08],
     [-0.1, 2.2, 0.03], // working end: short and straight, up beside the standing part
-  ]),
+];
+
+export const OVERHAND_NOOSE_PATH: KnotPath = {
+  points: place(OVERHAND_NOOSE_POINTS),
   traceFrom: 6,
   stepEnds: [16, 20, 24],
   knotFrom: 2,
@@ -369,3 +377,46 @@ export const ROUND_TURN_TWO_HALF_HITCHES_PATH: KnotPath = (() => {
     rail: RAIL,
   };
 })();
+
+// ---- Tied lying on the camp tarp ----------------------------------------------------------
+// The same verified knots laid down on the tarp (see layFlat): rope rests on the
+// canvas and only rises where it passes over other rope, so nothing hangs in mid-air.
+
+const ON_TARP = { ground: TARP.top };
+
+export const FIGURE_EIGHT_FLAT_PATH: KnotPath = { ...FIGURE_EIGHT_PATH, points: layFlat(FIGURE_EIGHT_POINTS), flat: ON_TARP };
+
+export const OVERHAND_NOOSE_FLAT_PATH: KnotPath = { ...OVERHAND_NOOSE_PATH, points: layFlat(OVERHAND_NOOSE_POINTS), flat: ON_TARP };
+
+/** On the tarp the red rope needs no peg: it comes in straight from the near edge and lies in a hook. */
+export const SQUARE_KNOT_FLAT_PATH: KnotPath = {
+  points: layFlat([
+    [0.26, -0.95, 0], // red rope, in from the near edge of the tarp…
+    [0.26, -0.45, 0],
+    [0.26, 0.4, 0.05],
+    ...SQUARE_HOOK, // …laid in a hook
+    [-0.16, 0.42, 0.05],
+    [-0.17, 0.2, 0], // its short end
+    // Never drawn: carries the curve round, well clear, to the gold rope.
+    [-0.18, -0.05, -0.1],
+    [-1.6, -0.1, -2],
+    [-1.6, 3.5, -2],
+    // Gold rope: straight in from the far side, then the traced end.
+    [0.2, 3.4, 0],
+    [0.2, 2.6, 0],
+    [0.2, 2.2, -0.03], // ← tracing starts here
+    ...SQUARE_LOOP,
+    [-0.07, 2.2, -0.04],
+    [-0.08, 2.45, 0], // working end, beside the gold rope
+  ]),
+  traceFrom: 19,
+  stepEnds: [24, 29, 36],
+  knotFrom: 19,
+  tailFrom: 35,
+  bodies: [
+    [2, 13],
+    [19, 35],
+  ],
+  partner: { end: 13, start: 17 },
+  flat: ON_TARP,
+};

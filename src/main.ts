@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import './styles.css';
 import { applyDocument, knotText, onLangChange, t } from './i18n';
-import { isUnlocked, LEVELS, loadCompleted, OVERHAND, saveCompleted, SECTIONS } from './knots/levels';
-import { OVERHAND_FLAT_PATH, TARP } from './knots/paths';
+import { isUnlocked, LEVELS, loadCompleted, saveCompleted, SECTIONS } from './knots/levels';
+import { FIGURE_EIGHT_PATH, TARP } from './knots/paths';
 import type { KnotDefinition, SectionId } from './knots/types';
 import { END_STYLES, type EndStyle } from './rope/ropeEnd';
 import { RopeMesh } from './rope/ropeMesh';
@@ -47,10 +47,8 @@ const TRAINER_FAR_BLUR = 1;
 
 const container = document.getElementById('stage')!;
 const stage = new Stage(container);
-/** Trial (?flat): the overhand knot tied lying on a camp tarp instead of hanging in the air. */
-const flatTrial = new URLSearchParams(location.search).has('flat');
-if (flatTrial) OVERHAND.path = OVERHAND_FLAT_PATH;
-const meadow = await createMeadow(stage.scene, stage.renderer, flatTrial ? TARP : undefined);
+// Knots are learnt lying on a camp tarp in the clearing (grass is kept off it).
+const meadow = await createMeadow(stage.scene, stage.renderer, TARP);
 stage.scene.add(meadow.root);
 stage.onUpdate(meadow.update);
 
@@ -111,14 +109,14 @@ stage.scene.add(tarp.object);
 const showPartner = (): void => {
   partnerRope.object.visible = screen === 'trainer' && Boolean(knot.path!.partner);
   stake.show(screen === 'trainer' ? knot.path!.partner?.stake : undefined);
-  tarp.show(screen === 'trainer' && Boolean(knot.path!.flat));
+  tarp.show(screen === 'trainer');
   // Never look from below a knot lying on the ground.
   stage.controls.maxPolarAngle = knot.path!.flat ? Math.PI * 0.42 : Math.PI * 0.6;
 };
 
 /** The menu's opening shot ties the figure-eight. */
 const hero = new HeroRope(
-  new RopePath(LEVELS.find((level) => level.id === 'figure-eight')!.path!, ROPE_RADIUS),
+  new RopePath(FIGURE_EIGHT_PATH, ROPE_RADIUS),
   ropePoints,
   ROPE_POINTS,
   (points) => rope.update(points),

@@ -1,10 +1,10 @@
 import {
   CLOVE_HITCH_PATH,
-  FIGURE_EIGHT_PATH,
-  OVERHAND_NOOSE_PATH,
-  OVERHAND_PATH,
+  FIGURE_EIGHT_FLAT_PATH,
+  OVERHAND_FLAT_PATH,
+  OVERHAND_NOOSE_FLAT_PATH,
   ROUND_TURN_TWO_HALF_HITCHES_PATH,
-  SQUARE_KNOT_PATH,
+  SQUARE_KNOT_FLAT_PATH,
 } from './paths';
 import type { KnotDefinition, KnotSection, KnotType, SectionId } from './types';
 
@@ -19,7 +19,7 @@ export const OVERHAND: KnotDefinition = {
     { title: 'Around the back', hint: 'Take the end round the right side and behind the rope.' },
     { title: 'Through the loop', hint: 'Bring the end forward through the loop and let it hang down.' },
   ],
-  path: OVERHAND_PATH,
+  path: OVERHAND_FLAT_PATH,
 };
 
 /** Sections of the learning path, shown as groups in the panel. Each unlocks on its own. */
@@ -56,7 +56,7 @@ export const LEVELS: KnotDefinition[] = [
       { title: 'Around the standing part', hint: 'Wrap the end once round the rope above the loop.' },
       { title: 'Down through the loop', hint: 'Finish by passing the end back through the first loop. You should see an 8.' },
     ],
-    path: FIGURE_EIGHT_PATH,
+    path: FIGURE_EIGHT_FLAT_PATH,
   },
   {
     id: 'square-knot',
@@ -69,7 +69,7 @@ export const LEVELS: KnotDefinition[] = [
       { title: 'Round the back', hint: 'Take the end round behind both legs of the hook.' },
       { title: 'Up beside itself', hint: 'Bring it up over the left leg and out behind the top of the hook, beside where you went in.' },
     ],
-    path: SQUARE_KNOT_PATH,
+    path: SQUARE_KNOT_FLAT_PATH,
   },
   {
     id: 'overhand-noose',
@@ -82,7 +82,7 @@ export const LEVELS: KnotDefinition[] = [
       { title: 'Round the back', hint: 'Swing the end out to the right and round behind, into the loop you just made.' },
       { title: 'Out through the loop', hint: 'Bring the end forward through the loop and out over its top.' },
     ],
-    path: OVERHAND_NOOSE_PATH,
+    path: OVERHAND_NOOSE_FLAT_PATH,
   },
   {
     id: 'clove-hitch',
