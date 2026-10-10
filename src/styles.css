@@ -280,7 +280,7 @@ body {
   inset: -3px;
 }
 
-.knot-level:hover:not(.locked):not(.soon) {
+.knot-level:hover:not(.soon) {
   background: rgba(255, 255, 255, 0.08);
   color: var(--text);
 }
@@ -296,7 +296,6 @@ body {
   color: var(--text);
 }
 
-.knot-level.locked,
 .knot-level.soon {
   opacity: 0.35;
   cursor: help;

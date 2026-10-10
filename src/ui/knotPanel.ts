@@ -1,7 +1,7 @@
 import { knotText, sectionText, t } from '../i18n';
 import type { KnotDefinition, KnotSection, SectionId } from '../knots/types';
 
-export type LevelState = 'done' | 'open' | 'locked' | 'soon';
+export type LevelState = 'done' | 'open' | 'soon';
 
 /**
  * Top-left card: back to the menu, the chosen section's numbered levels, then the selected
@@ -97,9 +97,9 @@ export class KnotPanel {
     this.levelButtons.forEach((button, index) => {
       const state = states[index];
       button.className = `knot-level ${state}${index === selected ? ' selected' : ''}`;
-      // Still clickable, so a locked knot can say what unlocks it.
-      button.setAttribute('aria-disabled', String(state === 'locked' || state === 'soon'));
-      const note = state === 'soon' ? t('noteSoon') : state === 'locked' ? t('noteLocked') : state === 'done' ? t('noteTied') : '';
+      // Still clickable, so a coming-soon knot can say so.
+      button.setAttribute('aria-disabled', String(state === 'soon'));
+      const note = state === 'soon' ? t('noteSoon') : state === 'done' ? t('noteTied') : '';
       button.title = `${knotText(levels[index]).name}${note}`;
       button.setAttribute('aria-label', button.title);
       button.setAttribute('aria-current', index === selected ? 'true' : 'false');

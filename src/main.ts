@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import './styles.css';
 import { applyDocument, knotText, onLangChange, t } from './i18n';
-import { isUnlocked, LEVELS, loadCompleted, saveCompleted, SECTIONS } from './knots/levels';
+import { freshProgress, LEVELS, SECTIONS } from './knots/levels';
 import { FIGURE_EIGHT_PATH, TARP } from './knots/paths';
 import type { KnotDefinition, SectionId } from './knots/types';
 import { END_STYLES, type EndStyle } from './rope/ropeEnd';
@@ -40,10 +40,8 @@ const REST_SECONDS = 1;
 const SWAY_DELAY = 1.1;
 const SWAY_SECONDS = 2.6;
 const SWAY_ANGLE = 0.2;
-/** Depth of field: cinematic on the menu; in the trainer the rope you tie stays sharp while the far clearing (and the fire) stays soft. */
+/** Depth of field: cinematic on the menu; off in the trainer so the rope you tie stays sharp. */
 const MENU_BLUR = 1;
-const TRAINER_BLUR = 0.3;
-const TRAINER_FAR_BLUR = 1;
 
 const container = document.getElementById('stage')!;
 const stage = new Stage(container);
@@ -65,13 +63,11 @@ const MENU_VIEW = { target: new THREE.Vector3(-0.55, 1.3, 1.9), distance: 3.5, p
 
 // ---- Levels -------------------------------------------------------------------------------
 
-const unlockAll = new URLSearchParams(location.search).has('all');
-const completed = loadCompleted();
+const completed = freshProgress();
 const levelState = (index: number): LevelState => {
   const level = LEVELS[index];
   if (!level.path) return 'soon';
-  if (completed.has(level.id)) return 'done';
-  return isUnlocked(index, completed, unlockAll) ? 'open' : 'locked';
+  return completed.has(level.id) ? 'done' : 'open';
 };
 /** Start at the first knot that's open but not yet tied (or the first one). */
 let levelIndex = Math.max(LEVELS.findIndex((_, i) => levelState(i) === 'open'), 0);
@@ -167,7 +163,7 @@ const prompt = (step: number): void => {
     const next = LEVELS.findIndex((level, i) => i > levelIndex && level.section === knot.section && levelState(i) === 'open');
     coach.show(
       t('tied', { name: knotText(knot).name }),
-      `${t('realLife')} ${next >= 0 ? t('unlockedNext', { name: knotText(LEVELS[next]).name }) : t('moreComing')}`,
+      `${t('realLife')} ${next >= 0 ? t('nextUp', { name: knotText(LEVELS[next]).name }) : t('moreComing')}`,
       'success',
     );
     return;
@@ -194,7 +190,6 @@ const finishTie = (): void => {
   panel.setProgress(knot.steps.length);
   if (!completed.has(knot.id)) {
     completed.add(knot.id);
-    saveCompleted(completed);
     refreshLevels();
   }
   prompt(knot.steps.length);
@@ -263,11 +258,6 @@ const selectLevel = (index: number): void => {
   const level = LEVELS[index];
   if (!level.path) {
     coach.show(t('soonTitle', { name: knotText(level).name }), t('soonText'));
-    return;
-  }
-  if (!isUnlocked(index, completed, unlockAll)) {
-    const first = LEVELS.find((earlier, i) => i < index && earlier.section === level.section && earlier.path && !completed.has(earlier.id));
-    coach.show(t('lockedTitle', { name: knotText(level).name }), t('lockedText', { name: first ? knotText(first).name : t('earlierKnots') }));
     return;
   }
   levelIndex = index;
@@ -367,7 +357,7 @@ const openSection = (section: SectionId): void => {
   landing.hide();
   ui.classList.remove('away');
   stage.controls.enabled = true;
-  stage.setBlur(TRAINER_BLUR, TRAINER_FAR_BLUR);
+  stage.setBlur(0);
   panel.showSection(section);
   levelIndex = -1;
   selectLevel(index);

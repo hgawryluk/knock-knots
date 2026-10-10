@@ -13,19 +13,19 @@ export const OVERHAND: KnotDefinition = {
   name: 'Overhand Knot',
   type: 'Stopper',
   section: 'survival',
-  summary: 'The simplest knot and the base of many others. Stops a rope end from slipping through.',
+  summary: 'The simplest knot, and the start of many others. Stops a rope end slipping through.',
   steps: [
-    { title: 'Make a loop', hint: 'Drag the blue end round to the left and up, crossing over the rope.' },
-    { title: 'Around the back', hint: 'Take the end round the right side and behind the rope.' },
-    { title: 'Through the loop', hint: 'Bring the end forward through the loop and let it hang down.' },
+    { title: 'Make a loop', hint: 'Bring the blue end round to the left and over the rope.' },
+    { title: 'Under the rope', hint: 'Go round the right side and under the rope.' },
+    { title: 'Through the loop', hint: 'Bring the end up through the loop and pull it toward you.' },
   ],
   path: OVERHAND_FLAT_PATH,
 };
 
-/** Sections of the learning path, shown as groups in the panel. Each unlocks on its own. */
+/** Sections of the learning path, shown as groups in the panel. */
 export const SECTIONS: KnotSection[] = [
   { id: 'survival', name: 'Survival', blurb:
-      'A few basic knots cover most everyday jobs — at camp, by the water and at home. The overhand and the figure-eight stop a rope end slipping through, the square knot ties up a bundle, the noose closes round whatever it holds, and the clove hitch and the round turn with two half hitches fix a rope to a pole or post. They are the foundation the other knots build on.' },
+      'A few basic knots cover most jobs at camp, by the water and at home: stop a rope end slipping, tie up a bundle, make a loop that closes, fix a rope to a pole. The other knots build on these.' },
   { id: 'mountains', name: 'Mountains', blurb: 'Climbing knots for tying in, belaying and getting back down.' },
 ];
 
@@ -52,9 +52,9 @@ export const LEVELS: KnotDefinition[] = [
     section: 'survival',
     summary: 'A bulkier, more secure stopper that is easier to untie, and the base of the climber’s tie-in.',
     steps: [
-      { title: 'Make a loop', hint: 'Bring the blue end round to form a loop, crossing the rope.' },
-      { title: 'Around the standing part', hint: 'Wrap the end once round the rope above the loop.' },
-      { title: 'Down through the loop', hint: 'Finish by passing the end back through the first loop. You should see an 8.' },
+      { title: 'Make a loop', hint: 'Bring the blue end round to the left and over the rope.' },
+      { title: 'Round the rope', hint: 'Wrap the end once round the rope, just above the loop.' },
+      { title: 'Through the first loop', hint: 'Pass the end through the first loop and pull it toward you. You should see an 8.' },
     ],
     path: FIGURE_EIGHT_FLAT_PATH,
   },
@@ -65,9 +65,9 @@ export const LEVELS: KnotDefinition[] = [
     section: 'survival',
     summary: 'Ties two ends round a bundle. Never use it to join ropes that take a load.',
     steps: [
-      { title: 'Down through the hook', hint: 'Take the blue end down behind the top of the red hook, down inside it and out over its right leg.' },
-      { title: 'Round the back', hint: 'Take the end round behind both legs of the hook.' },
-      { title: 'Up beside itself', hint: 'Bring it up over the left leg and out behind the top of the hook, beside where you went in.' },
+      { title: 'Into the hook', hint: 'Take the blue end under the top of the red hook, through the middle and out over its right leg.' },
+      { title: 'Under the hook', hint: 'Go under both legs of the hook.' },
+      { title: 'Out beside itself', hint: 'Come up over the left leg and out under the top of the hook, next to where you went in.' },
     ],
     path: SQUARE_KNOT_FLAT_PATH,
   },
@@ -78,9 +78,9 @@ export const LEVELS: KnotDefinition[] = [
     section: 'survival',
     summary: 'A sliding loop that closes when the rope is pulled.',
     steps: [
-      { title: 'Round the rope', hint: 'Bring the blue end up, behind the rope, round its left side and across the front over itself.' },
-      { title: 'Round the back', hint: 'Swing the end out to the right and round behind, into the loop you just made.' },
-      { title: 'Out through the loop', hint: 'Bring the end forward through the loop and out over its top.' },
+      { title: 'Round the rope', hint: 'Bring the blue end up, under the rope, round its left side and back over itself.' },
+      { title: 'Underneath', hint: 'Swing the end to the right and under, into the loop you just made.' },
+      { title: 'Out through the loop', hint: 'Bring the end up through the loop and out over its top.' },
     ],
     path: OVERHAND_NOOSE_FLAT_PATH,
   },
@@ -91,9 +91,9 @@ export const LEVELS: KnotDefinition[] = [
     section: 'survival',
     summary: 'Quick, adjustable hitch to fix a rope to a pole, post or rail.',
     steps: [
-      { title: 'Round the rail', hint: 'Take the blue end down the front of the rail, under it, up the back and over the top.' },
-      { title: 'Cross over, round again', hint: 'Come down the front across the rope, then round the rail again beside the first turn.' },
-      { title: 'Tuck under the cross', hint: 'Bring the end over the top and down under the diagonal, so it pins the end.' },
+      { title: 'Round the rail', hint: 'Take the blue end down the front, under the rail, up the back and over the top.' },
+      { title: 'Cross over, round again', hint: 'Come down across the rope, then go round the rail again next to the first turn.' },
+      { title: 'Tuck under the cross', hint: 'Go over the top and tuck the end under the diagonal.' },
     ],
     path: CLOVE_HITCH_PATH,
   },
@@ -104,9 +104,9 @@ export const LEVELS: KnotDefinition[] = [
     section: 'survival',
     summary: 'A strong, easy-to-untie tie-off to a post, ring or log.',
     steps: [
-      { title: 'Round turn', hint: 'Take the blue end round the rail one and a half times, coming up the front.' },
-      { title: 'First half hitch', hint: 'Lead the end across the front of the rope above the rail, round behind it, and tuck it under itself.' },
-      { title: 'Second half hitch', hint: 'Do the same again just above, turning the same way.' },
+      { title: 'Round turn', hint: 'Wrap the blue end round the rail one and a half times, so it comes up at the front.' },
+      { title: 'First half hitch', hint: 'Take the end across the front of the rope, round behind it, and tuck it under itself.' },
+      { title: 'Second half hitch', hint: 'Do the same again just above, the same way round.' },
     ],
     path: ROUND_TURN_TWO_HALF_HITCHES_PATH,
   },
@@ -129,30 +129,12 @@ export const LEVELS: KnotDefinition[] = [
   soon('munter-hitch', 'Munter Hitch', 'Hitch', 'mountains', 'Belay or lower someone using just a carabiner and friction.'),
 ];
 
-const STORAGE_KEY = 'knots.completed';
-
-/** Ids of knots the player has tied. Browser storage may be unavailable; progress then lasts the visit. */
-export function loadCompleted(): Set<string> {
+/** Ids of knots the player has tied. Progress lasts only for the current visit: a refresh starts from the beginning. */
+export function freshProgress(): Set<string> {
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
-    return new Set(Array.isArray(saved) ? saved.filter((id): id is string => typeof id === 'string') : []);
+    localStorage.removeItem('knots.completed'); // Drop progress saved by older builds.
   } catch {
-    return new Set();
+    // Storage unavailable; nothing to clear.
   }
-}
-
-export function saveCompleted(completed: Set<string>): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...completed]));
-  } catch {
-    // Not persisted; fine.
-  }
-}
-
-/** A level opens once every playable level before it in its section has been tied. Levels without a path are still to come. */
-export function isUnlocked(index: number, completed: Set<string>, unlockAll = false): boolean {
-  const level = LEVELS[index];
-  if (!level.path) return false;
-  if (unlockAll) return true;
-  return LEVELS.slice(0, index).every((earlier) => earlier.section !== level.section || !earlier.path || completed.has(earlier.id));
+  return new Set();
 }

@@ -7,56 +7,56 @@ import type { KnotType, SectionId } from './types';
 export const PL_KNOTS: Record<string, { name: string; summary: string; steps?: [string, string][] }> = {
   overhand: {
     name: 'Węzeł prosty',
-    summary: 'Najprostszy węzeł i podstawa wielu innych. Nie pozwala końcowi liny się wysunąć.',
+    summary: 'Najprostszy węzeł i początek wielu innych. Nie pozwala końcowi liny się wysunąć.',
     steps: [
-      ['Zrób pętlę', 'Przeciągnij niebieski koniec w lewo i do góry, krzyżując go nad liną.'],
-      ['Dookoła z tyłu', 'Poprowadź koniec wokół prawej strony i za liną.'],
-      ['Przez pętlę', 'Przełóż koniec do przodu przez pętlę i pozwól mu zwisnąć.'],
+      ['Zrób pętlę', 'Poprowadź niebieski koniec w lewo i nad liną.'],
+      ['Pod liną', 'Obejdź prawą stronę i przełóż koniec pod liną.'],
+      ['Przez pętlę', 'Wyciągnij koniec do góry przez pętlę i pociągnij do siebie.'],
     ],
   },
   'figure-eight': {
     name: 'Ósemka',
     summary: 'Grubszy i pewniejszy węzeł blokujący, łatwiejszy do rozwiązania. Podstawa wiązania się wspinacza.',
     steps: [
-      ['Zrób pętlę', 'Poprowadź niebieski koniec tak, by utworzyć pętlę, krzyżując linę.'],
-      ['Wokół liny', 'Owiń koniec raz wokół liny nad pętlą.'],
-      ['W dół przez pętlę', 'Na koniec przełóż koniec z powrotem przez pierwszą pętlę. Powinna powstać ósemka.'],
+      ['Zrób pętlę', 'Poprowadź niebieski koniec w lewo i nad liną.'],
+      ['Wokół liny', 'Owiń koniec raz wokół liny, tuż nad pętlą.'],
+      ['Przez pierwszą pętlę', 'Przełóż koniec przez pierwszą pętlę i pociągnij do siebie. Widać ósemkę.'],
     ],
   },
   'square-knot': {
     name: 'Węzeł płaski',
     summary: 'Wiąże dwa końce wokół tobołka. Nigdy nie łącz nim lin, które przenoszą obciążenie.',
     steps: [
-      ['W dół przez hak', 'Poprowadź niebieski koniec w dół za górą czerwonego haka, w dół jego środkiem i wyprowadź nad jego prawą nogą.'],
-      ['Dookoła z tyłu', 'Przeprowadź koniec za obiema nogami haka.'],
-      ['W górę obok siebie', 'Wyprowadź go w górę nad lewą nogą i za górą haka, tuż obok miejsca wejścia.'],
+      ['Do haka', 'Poprowadź niebieski koniec pod górą czerwonego haka, przez środek i nad jego prawą nogą.'],
+      ['Pod hakiem', 'Przełóż koniec pod obiema nogami haka.'],
+      ['Obok siebie', 'Wyjdź nad lewą nogą i pod górą haka, tuż obok miejsca wejścia.'],
     ],
   },
   'overhand-noose': {
     name: 'Prosta pętla zaciskowa',
     summary: 'Pętla przesuwna, która zaciska się, gdy pociągniesz linę.',
     steps: [
-      ['Wokół liny', 'Poprowadź niebieski koniec w górę, za liną, wokół jej lewej strony i z przodu nad samym sobą.'],
-      ['Dookoła z tyłu', 'Wyprowadź koniec w prawo i dookoła z tyłu, do świeżo zrobionej pętli.'],
-      ['Przez pętlę', 'Przełóż koniec do przodu przez pętlę i wyprowadź go nad jej górą.'],
+      ['Wokół liny', 'Poprowadź niebieski koniec w górę, pod liną, wokół jej lewej strony i z powrotem nad sobą.'],
+      ['Pod spodem', 'Przesuń koniec w prawo i pod spodem, do nowej pętli.'],
+      ['Przez pętlę', 'Wyciągnij koniec do góry przez pętlę i wyprowadź nad jej górą.'],
     ],
   },
   'clove-hitch': {
     name: 'Wyblinka',
     summary: 'Szybki, regulowany węzeł do mocowania liny do drąga, słupka lub poręczy.',
     steps: [
-      ['Wokół drąga', 'Poprowadź niebieski koniec w dół przed drągiem, pod nim, w górę z tyłu i nad wierzchem.'],
-      ['Na krzyż i jeszcze raz', 'Zejdź z przodu w poprzek liny, a potem owiń drąg ponownie obok pierwszego zwoju.'],
-      ['Pod skrzyżowanie', 'Przełóż koniec przez wierzch i w dół pod ukośną nitkę, tak żeby go przytrzymała.'],
+      ['Wokół drąga', 'Poprowadź niebieski koniec w dół z przodu, pod drągiem, w górę z tyłu i przez wierzch.'],
+      ['Na krzyż i jeszcze raz', 'Zejdź w poprzek liny i owiń drąg drugi raz, obok pierwszego zwoju.'],
+      ['Pod skrzyżowanie', 'Przejdź przez wierzch i wsuń koniec pod ukośną nitkę.'],
     ],
   },
   'round-turn-two-half-hitches': {
     name: 'Pełny obrót z dwoma półsztykami',
     summary: 'Mocne, łatwe do rozwiązania zamocowanie do słupka, kółka lub kłody.',
     steps: [
-      ['Pełny obrót', 'Owiń niebieski koniec wokół drąga półtora raza, wychodząc z przodu do góry.'],
-      ['Pierwszy półsztyk', 'Poprowadź koniec przed liną nad drągiem, za nią i wsuń go pod siebie.'],
-      ['Drugi półsztyk', 'Powtórz to tuż wyżej, w tę samą stronę.'],
+      ['Pełny obrót', 'Owiń niebieski koniec wokół drąga półtora raza, tak by wyszedł z przodu.'],
+      ['Pierwszy półsztyk', 'Przełóż koniec przed liną, obejdź ją z tyłu i wsuń pod siebie.'],
+      ['Drugi półsztyk', 'Zrób to samo tuż wyżej, w tę samą stronę.'],
     ],
   },
   'figure-eight-loop': { name: 'Pętla ósemkowa', summary: 'Stała pętla na końcu liny, która się nie przesuwa.' },
@@ -79,7 +79,7 @@ export const PL_KNOTS: Record<string, { name: string; summary: string; steps?: [
 
 export const PL_SECTIONS: Record<SectionId, { name: string; blurb: string }> = {
   survival: { name: 'Survival', blurb:
-      'Kilka podstawowych węzłów wystarczy do większości codziennych zadań — na biwaku, nad wodą i w domu. Węzeł prosty i ósemka nie pozwalają końcowi liny się wysunąć, węzeł płaski obwiązuje tobołek, pętla zaciskowa zaciska się na tym, co obejmie, a wyblinka i pełny obrót z dwoma półsztykami mocują linę do drąga lub słupka. To fundament, na którym opierają się kolejne węzły.' },
+      'Kilka podstawowych węzłów wystarczy do większości zadań na biwaku, nad wodą i w domu: zablokować koniec liny, obwiązać tobołek, zrobić zaciskaną pętlę, przywiązać linę do drąga. Na nich opierają się kolejne węzły.' },
   mountains: { name: 'Góry', blurb: 'Węzły wspinaczkowe: do wiązania się, asekuracji i zjazdu.' },
 };
 
