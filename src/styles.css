@@ -1140,3 +1140,13 @@ body {
     display: none;
   }
 }
+
+/* On a phone the timeline slider is too cramped to be of use: the step buttons do its job. */
+@media (max-width: 720px) {
+  .demo-track {
+    display: none;
+  }
+  .demo-try {
+    margin-left: auto;
+  }
+}
