@@ -343,7 +343,9 @@ stage.onUpdate((dt, elapsed) => {
 
 // ---- Menu -------------------------------------------------------------------------------
 
-const landing = new Landing(document.body, SECTIONS, LEVELS, (section) => (location.hash = section));
+const landing = new Landing(document.body, SECTIONS, LEVELS, ({ section, type, knot: id }) => {
+  location.hash = id ? `${section}/${id}` : type ? `${section}/${type.toLowerCase()}` : section;
+});
 landing.update(completed);
 
 /** Camera follows the page: a slow drift on the hero knot, blending to the menu view as you scroll. */
@@ -378,9 +380,12 @@ const openMenu = (): void => {
   hero.restart();
 };
 
-const openSection = (section: SectionId): void => {
+/** Opens a section's trainer: at a given knot (by id) or the first of a kind (lower case), else the first not yet tied. */
+const openSection = (section: SectionId, at?: string): void => {
+  const inSection = (level: KnotDefinition): boolean => level.section === section && Boolean(level.path);
+  const chosen = at ? LEVELS.findIndex((level) => inSection(level) && (level.id === at || level.type.toLowerCase() === at)) : -1;
   const first = LEVELS.findIndex((level, i) => level.section === section && levelState(i) === 'open');
-  const index = first >= 0 ? first : LEVELS.findIndex((level) => level.section === section && level.path);
+  const index = chosen >= 0 ? chosen : first >= 0 ? first : LEVELS.findIndex(inSection);
   if (index < 0) {
     history.replaceState(null, '', location.pathname + location.search);
     return openMenu();
@@ -396,10 +401,11 @@ const openSection = (section: SectionId): void => {
   selectLevel(index);
 };
 
-/** The address says where you are (#survival), so Back returns to the menu. */
+/** The address says where you are (#survival, #survival/hitch, #survival/figure-eight), so Back returns to the menu. */
 const route = (): void => {
-  const section = SECTIONS.find((s) => `#${s.id}` === location.hash);
-  if (section) openSection(section.id);
+  const [id, at] = location.hash.slice(1).split('/');
+  const section = SECTIONS.find((s) => s.id === id);
+  if (section) openSection(section.id, at);
   else openMenu();
 };
 window.addEventListener('hashchange', route);

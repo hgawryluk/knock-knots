@@ -1,5 +1,5 @@
-import { PL_KNOTS, PL_SECTIONS, PL_TYPES } from './knots/textPl';
-import type { KnotDefinition, KnotSection, KnotStep } from './knots/types';
+import { PL_KNOTS, PL_SECTIONS, PL_TYPE_GROUPS, PL_TYPES } from './knots/textPl';
+import type { KnotDefinition, KnotSection, KnotStep, KnotType } from './knots/types';
 
 /**
  * Interface language: English or Polish. The choice is remembered; the first
@@ -164,6 +164,13 @@ export function knotText(knot: KnotDefinition): { name: string; type: string; su
     summary: pl?.summary ?? knot.summary,
     steps: knot.steps.map((step, i) => (pl?.steps?.[i] ? { title: pl.steps[i][0], hint: pl.steps[i][1] } : step)),
   };
+}
+
+const TYPE_GROUPS: Record<KnotType, string> = { Stopper: 'Stoppers', Loop: 'Loops', Hitch: 'Hitches', Bend: 'Bends', Binding: 'Bindings' };
+
+/** A kind of knot as a group name ("Hitches" / "Zaczepowe"). */
+export function typeGroupText(type: KnotType): string {
+  return lang === 'pl' ? PL_TYPE_GROUPS[type] : TYPE_GROUPS[type];
 }
 
 export function sectionText(section: KnotSection): { name: string; blurb: string } {

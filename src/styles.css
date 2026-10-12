@@ -1150,3 +1150,87 @@ body {
     margin-left: auto;
   }
 }
+
+/* ---- Menu card: knots grouped by kind -------------------------------------------------- */
+
+.path-groups {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.path-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.path-type,
+.path-knot,
+.path-go {
+  font: inherit;
+  cursor: pointer;
+}
+
+/* The kind: to its first knot. */
+.path-type {
+  margin-right: 2px;
+  padding: 4px 2px;
+  border: 0;
+  background: transparent;
+  color: #ffcf4a;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.path-type:hover {
+  text-decoration: underline;
+}
+
+/* A knot: straight to it. */
+.path-knot {
+  padding: 4px 10px;
+  border: 1px solid var(--chip-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+
+.path-knot:hover {
+  border-color: rgba(255, 207, 74, 0.6);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.path-knot.tied {
+  border-color: #6fbf73;
+  color: #8fd694;
+}
+
+.path-knot.tied::before {
+  content: '✓ ';
+}
+
+.path-type.soon,
+.path-knot.soon {
+  cursor: default;
+  color: var(--muted);
+}
+
+.path-knot.soon {
+  border-style: dashed;
+}
+
+.path-go {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.path-card.soon .path-go {
+  cursor: default;
+}

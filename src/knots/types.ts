@@ -4,6 +4,8 @@ export interface KnotStep {
 }
 
 export type KnotType = 'Stopper' | 'Loop' | 'Hitch' | 'Bend' | 'Binding';
+/** The kinds in the order the menu lists them. */
+export const KNOT_TYPES: KnotType[] = ['Stopper', 'Loop', 'Hitch', 'Bend', 'Binding'];
 
 export type SectionId = 'survival' | 'mountains';
 

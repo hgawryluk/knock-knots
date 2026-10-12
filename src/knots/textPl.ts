@@ -101,6 +101,15 @@ export const PL_SECTIONS: Record<SectionId, { name: string; blurb: string }> = {
   mountains: { name: 'Góry', blurb: 'Węzły wspinaczkowe: do wiązania się, asekuracji i zjazdu.' },
 };
 
+/** Kinds of knot as group names, for the menu ("Hitches"). */
+export const PL_TYPE_GROUPS: Record<KnotType, string> = {
+  Stopper: 'Blokujące',
+  Loop: 'Pętle',
+  Hitch: 'Zaczepowe',
+  Bend: 'Łączące',
+  Binding: 'Wiążące',
+};
+
 export const PL_TYPES: Record<KnotType, string> = {
   Stopper: 'Blokujący',
   Loop: 'Pętla',

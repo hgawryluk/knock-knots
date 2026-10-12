@@ -1,11 +1,15 @@
-import { knotCount, knotText, sectionText, t } from '../i18n';
-import type { KnotDefinition, KnotSection, SectionId } from '../knots/types';
+import { knotCount, knotText, sectionText, t, typeGroupText } from '../i18n';
+import { KNOT_TYPES, type KnotDefinition, type KnotSection, type KnotType, type SectionId } from '../knots/types';
+
+/** Where the menu sends you: a section, optionally a kind of knot in it or one knot. */
+export type MenuChoice = { section: SectionId; type?: KnotType; knot?: string };
 
 /**
  * The main menu: a full-screen page over the 3D scene. First a hero (title
  * over the rope tying itself), then, scrolling down, a card per section of
- * knots to choose from. `progress` (0 at the top, 1 once the cards are in
- * view) lets the scene move with the scroll.
+ * knots to choose from, its knots grouped by kind; a kind or a knot takes you
+ * straight to it. `progress` (0 at the top, 1 once the cards are in view) lets
+ * the scene move with the scroll.
  */
 export class Landing {
   readonly element: HTMLElement;
@@ -16,7 +20,7 @@ export class Landing {
     root: HTMLElement,
     private readonly sections: KnotSection[],
     private readonly levels: KnotDefinition[],
-    onChoose: (section: SectionId) => void,
+    private readonly onChoose: (choice: MenuChoice) => void,
   ) {
     this.element = document.createElement('div');
     this.element.className = 'landing';
@@ -40,17 +44,17 @@ export class Landing {
     `;
     const list = this.element.querySelector('.path-cards')!;
     for (const section of sections) {
-      const card = document.createElement('button');
-      card.type = 'button';
+      // The whole card opens the section; the kinds and knots on it (buttons of their own) go straight there.
+      const card = document.createElement('div');
       card.className = 'path-card';
       card.innerHTML = `
         <div class="path-head"><span class="path-name"></span><span class="path-count"></span></div>
         <p class="path-blurb"></p>
-        <ul class="path-knots"></ul>
-        <span class="path-go"></span>
+        <div class="path-groups"></div>
+        <button class="path-go" type="button"></button>
       `;
       card.addEventListener('click', () => {
-        if (card.getAttribute('aria-disabled') !== 'true') onChoose(section.id);
+        if (card.getAttribute('aria-disabled') !== 'true') onChoose({ section: section.id });
       });
       list.appendChild(card);
       this.cards.set(section.id, card);
@@ -96,13 +100,23 @@ export class Landing {
       card.querySelector('.path-count')!.textContent = ready.length
         ? `${knotCount(ready.length)}${tied ? ` · ${t('tiedCount', { n: tied })}` : ''}`
         : t('comingSoon');
-      const items = (ready.length ? ready : knots).map((level) => {
-        const li = document.createElement('li');
-        li.textContent = knotText(level).name;
-        li.classList.toggle('tied', completed.has(level.id));
-        return li;
+      // A row per kind that has knots: the kind (to its first knot), then its knots.
+      const shown = ready.length ? ready : knots;
+      const rows = KNOT_TYPES.filter((type) => shown.some((level) => level.type === type)).map((type) => {
+        const row = document.createElement('div');
+        row.className = 'path-group';
+        const kind = this.choice(ready.length ? { section: section.id, type } : null, typeGroupText(type), 'path-type');
+        const items = shown
+          .filter((level) => level.type === type)
+          .map((level) => {
+            const item = this.choice(level.path ? { section: section.id, knot: level.id } : null, knotText(level).name, 'path-knot');
+            item.classList.toggle('tied', completed.has(level.id));
+            return item;
+          });
+        row.replaceChildren(kind, ...items);
+        return row;
       });
-      card.querySelector('.path-knots')!.replaceChildren(...items);
+      card.querySelector('.path-groups')!.replaceChildren(...rows);
       card.querySelector('.path-go')!.textContent = ready.length
         ? coming
           ? t('startMore', { n: coming })
@@ -111,6 +125,25 @@ export class Landing {
       card.setAttribute('aria-disabled', String(!ready.length));
       card.classList.toggle('soon', !ready.length);
     }
+  }
+
+  /** A kind or knot on a card: a button that goes straight to it, or plain text while it is still to come. */
+  private choice(target: MenuChoice | null, label: string, className: string): HTMLElement {
+    if (!target) {
+      const span = document.createElement('span');
+      span.className = `${className} soon`;
+      span.textContent = label;
+      return span;
+    }
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = className;
+    button.textContent = label;
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      this.onChoose(target);
+    });
+    return button;
   }
 
   /** Lights the first `count` of the three steps (the rope behind ties in time with them). */
