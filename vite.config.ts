@@ -24,5 +24,7 @@ function devScreenshots(): Plugin {
 }
 
 export default defineConfig({
+  // Served from a subpath on GitHub Pages (set by the deploy workflow), from the root everywhere else.
+  base: process.env.BASE_PATH ?? '/',
   plugins: [devScreenshots()],
 });

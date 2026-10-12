@@ -4,3 +4,7 @@ dist
 *.local
 assets-src
 .shots
+
+# Local working notes and editor settings
+CLAUDE.md
+.claude/
