@@ -1,6 +1,8 @@
 import {
+  CLOVE_HITCH_CARABINER_PATH,
   CLOVE_HITCH_PATH,
   FIGURE_EIGHT_FLAT_PATH,
+  MUNTER_HITCH_PATH,
   OVERHAND_FLAT_PATH,
   OVERHAND_NOOSE_FLAT_PATH,
   ROUND_TURN_TWO_HALF_HITCHES_PATH,
@@ -125,8 +127,34 @@ export const LEVELS: KnotDefinition[] = [
   soon('truckers-hitch', 'Trucker’s Hitch', 'Hitch', 'survival', 'A built-in pulley that lets you pull a line really tight and tie it off.'),
   soon('autolocking-truckers-hitch', 'Autolocking Trucker’s Hitch', 'Hitch', 'survival', 'A trucker’s hitch that holds the tension by itself while you tie off.'),
 
+  {
+    id: 'clove-hitch-carabiner',
+    name: 'Clove Hitch on a Carabiner',
+    type: 'Hitch',
+    section: 'mountains',
+    summary: 'Ties you in to the anchor. Quick to adjust, and it holds fast once loaded.',
+    steps: [
+      { title: 'First loop', hint: 'Twist a loop in the rope.' },
+      { title: 'Second loop', hint: 'Twist a second loop beside it, the same way round.' },
+      { title: 'Right loop behind', hint: 'Slide the right loop behind the left one.' },
+      { title: 'Clip them in', hint: 'Unscrew the sleeve, press the gate in with the loops so they slip through, let them drop onto the bar, then lock the gate.' },
+    ],
+    path: CLOVE_HITCH_CARABINER_PATH,
+  },
+  {
+    id: 'munter-hitch',
+    name: 'Munter Hitch',
+    type: 'Hitch',
+    section: 'mountains',
+    summary: 'Belay or lower someone with just a carabiner: the rope runs round it with plenty of friction.',
+    steps: [
+      { title: 'Make a loop', hint: 'Take hold of the hanging strand and twist a small loop in it, out to the right.' },
+      { title: 'To the gate', hint: 'Bring the loop up beside the gate, by its nose at the bottom right.' },
+      { title: 'Clip it in', hint: 'Unscrew the sleeve, press the gate in with the loop so it slips through, let it drop onto the bar, then lock the gate.' },
+    ],
+    path: MUNTER_HITCH_PATH,
+  },
   soon('figure-eight-follow-through', 'Figure-Eight Follow-Through', 'Loop', 'mountains', 'The climber’s tie-in: a figure-eight loop threaded through the harness.'),
-  soon('munter-hitch', 'Munter Hitch', 'Hitch', 'mountains', 'Belay or lower someone using just a carabiner and friction.'),
 ];
 
 /** Ids of knots the player has tied. Progress lasts only for the current visit: a refresh starts from the beginning. */

@@ -42,16 +42,40 @@ export interface KnotPath {
    * to the other well away from the knot. `stake` is where it is pegged to the ground.
    */
   partner?: { end: number; start: number; stake?: Point3 };
-  /** A pole lying along x that the knot is tied round (world units), shown as a camp rail. */
+  /** A bar lying along x that the knot is tied round (world units): the camp rail, or the bottom of a carabiner. */
   rail?: Rail;
   /** The knot is tied lying on a tarp whose top is at this height (world units), rather than hanging. */
   flat?: { ground: number };
+  /**
+   * Tied the way climbers tie it on a carabiner: no free end — loops twisted in
+   * the middle of the rope and clipped in through the gate. Instead of drawing the
+   * rope out along the path, the whole rope moves through these poses (the last is
+   * `points`, the finished knot) and you drag a marker on it.
+   */
+  clip?: Clip;
+}
+
+export interface Clip {
+  /** Poses of the whole rope (control points; each is resampled evenly along the rope, so the counts may differ), from the start to the finished knot. */
+  poses: Point3[][];
+  /** When each pose is reached (0–1 through the tying). */
+  times: number[];
+  /** For each pose, the control point you hold and move. */
+  handle: number[];
+  /** Where each step ends (0–1 through the tying). */
+  stepEnds: number[];
+  /** How long the demo takes to tie it (seconds): slow enough to see each move. */
+  seconds: number;
+  /** The gate: unscrewed from…to, open from…to, closed again from…to, locked from…to (0–1 through the tying). */
+  gate: { unscrew: [number, number]; open: [number, number]; close: [number, number]; lock: [number, number] };
 }
 
 export interface Rail {
   y: number;
   z: number;
   radius: number;
+  /** The bar is the bottom of a carabiner hanging from a bolt (Mountains), not the camp rail. */
+  carabiner?: boolean;
 }
 
 export interface KnotDefinition {

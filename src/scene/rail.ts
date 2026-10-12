@@ -45,8 +45,8 @@ export class CampRail {
 
   /** Shows the rail where `rail` says, or hides it. */
   show(rail: Rail | undefined): void {
-    this.object.visible = Boolean(rail);
-    if (!rail) return;
+    this.object.visible = Boolean(rail) && !rail?.carabiner;
+    if (!rail || rail.carabiner) return;
     const forkY = rail.y - rail.radius;
     for (const mesh of this.object.children) {
       const { side, lean } = mesh.userData as { side?: number; lean?: number };

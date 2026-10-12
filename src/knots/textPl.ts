@@ -73,8 +73,26 @@ export const PL_KNOTS: Record<string, { name: string; summary: string; steps?: [
   prusik: { name: 'Prusik', summary: 'Pętla owinięta wokół liny, która trzyma pod obciążeniem i przesuwa się, gdy jest luźna.' },
   'truckers-hitch': { name: 'Węzeł woźnicy', summary: 'Wbudowany bloczek, który pozwala mocno napiąć linkę i ją zawiązać.' },
   'autolocking-truckers-hitch': { name: 'Samoblokujący węzeł woźnicy', summary: 'Węzeł woźnicy, który sam trzyma naprężenie, gdy go wiążesz.' },
+  'clove-hitch-carabiner': {
+    name: 'Wyblinka na karabinku',
+    summary: 'Wpina cię do stanowiska. Łatwo ją wyregulować, a pod obciążeniem mocno trzyma.',
+    steps: [
+      ['Pierwsza pętla', 'Skręć pętlę na linie.'],
+      ['Druga pętla', 'Obok skręć drugą pętlę, w tę samą stronę.'],
+      ['Prawa za lewą', 'Przesuń prawą pętlę za lewą.'],
+      ['Wepnij', 'Odkręć zakrętkę, wciśnij pętlami zamek, aż przejdą do środka, opuść je na karabinek i zakręć zamek.'],
+    ],
+  },
+  'munter-hitch': {
+    name: 'Półwyblinka',
+    summary: 'Asekuruj lub opuszczaj partnera samym karabinkiem: lina przesuwa się po nim z dużym tarciem.',
+    steps: [
+      ['Zrób pętlę', 'Chwyć zwisającą nitkę i skręć na niej małą pętlę w prawo.'],
+      ['Do zamka', 'Podnieś pętlę do zamka, przy jego nosku na dole po prawej.'],
+      ['Wepnij', 'Odkręć zakrętkę, wciśnij pętlą zamek, aż przejdzie do środka, opuść ją na karabinek i zakręć zamek.'],
+    ],
+  },
   'figure-eight-follow-through': { name: 'Ósemka prowadzona', summary: 'Wiązanie się wspinacza: ósemka przewleczona przez uprząż.' },
-  'munter-hitch': { name: 'Półwyblinka', summary: 'Asekuracja lub opuszczanie partnera przy użyciu samego karabinka i tarcia.' },
 };
 
 export const PL_SECTIONS: Record<SectionId, { name: string; blurb: string }> = {

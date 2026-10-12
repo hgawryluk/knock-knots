@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import type { KnotPath, Point3, Rail } from './types';
 
 /**
@@ -375,6 +376,446 @@ export const ROUND_TURN_TWO_HALF_HITCHES_PATH: KnotPath = (() => {
     knotFrom: 2,
     tailFrom: points.length - 2,
     rail: RAIL,
+  };
+})();
+
+// ---- On a carabiner (Mountains) -----------------------------------------------------------
+// The carabiner hangs from a bolt in the rock; its straight bottom bar runs along x and the
+// knot is tied round it, like a rail (world units throughout). Both knots are tied the way
+// climbers tie them — loops twisted in the middle of the rope and clipped in through the
+// gate (see Clip) — with both strands running down out of the frame.
+
+/** Where the carabiner's bottom bar runs (its axis), and its radius: a touch thicker than the rope. */
+export const CARABINER = { x: 0, y: 0.98, z: 1.9, barRadius: 0.034 };
+/**
+ * Centreline of the carabiner (relative to the bar's axis: x across, y up),
+ * anticlockwise from the bottom left. Pear-shaped (HMS): a wide, straight bottom
+ * bar for the knot, narrowing to the top where it hangs.
+ */
+export const CARABINER_OUTLINE: [number, number][] = [
+  [-0.14, 0],
+  [-0.07, 0],
+  [0, 0],
+  [0.07, 0],
+  [0.14, 0], // straight bottom bar, wide enough for two turns and a diagonal: the knot sits here
+  [0.195, 0.026],
+  [0.215, 0.09], // the gate's nose (keylock), just above the bar's corner…
+  [0.166, 0.251], // …the gate, straight…
+  [0.112, 0.43],
+  [0.066, 0.579],
+  [0.04, 0.665], // …up to its hinge, under the narrow top that hangs from the bolt
+  [-0.035, 0.69],
+  [-0.115, 0.655],
+  [-0.165, 0.53], // spine
+  [-0.2, 0.32],
+  [-0.215, 0.09],
+  [-0.195, 0.026],
+];
+/**
+ * The gate, as on a real pear-shaped HMS: hinged at the top (outline point
+ * `hinge`, by the narrow end it hangs from), closing on a keylock nose at the
+ * bottom right (`nose`), just above the corner of the wide bottom bar. It opens
+ * inward, its lower end swinging up and in, so the gap opens right by the bar.
+ */
+export const CARABINER_GATE = { nose: 6, hinge: 10 };
+/** How far the gate swings about its hinge when fully open (radians, about z: negative swings it in). */
+export const CARABINER_GATE_SWING = -0.32;
+
+/** The carabiner's centreline as a closed curve, and where along it (0–1 of its length) each outline point lies. */
+const FRAME = new THREE.CatmullRomCurve3(CARABINER_OUTLINE.map(([x, y]) => new THREE.Vector3(x, y, 0)), true, 'centripetal');
+const FRAME_LENGTH = FRAME.getLength();
+const FRAME_LENGTHS = FRAME.getLengths(CARABINER_OUTLINE.length * 100);
+const frameAt = (index: number): number => FRAME_LENGTHS[Math.round(index * 100)] / FRAME_LENGTH;
+/** The middle of the bottom bar, where knots are authored. */
+const BAR_MIDDLE = frameAt(2);
+
+/**
+ * Rope round the bar's middle moved to `along` (0–1 round the outline) on the
+ * carabiner, bent to follow it, `out` further out from it, opened up `grow`
+ * times round it and drawn together `spread` times along it: along the bar
+ * becomes along the outline, up becomes into the carabiner, front stays front.
+ * A loop round the bar stays round the metal wherever it is put — on the gate,
+ * round the corner — so sliding it there never passes rope through metal.
+ */
+function onFrame(points: Point3[], along: number, out = 0, grow = 1, spread = 1): Point3[] {
+  return points.map(([x, y, z]): Point3 => {
+    const across = (x - CARABINER.x) * spread;
+    const up = (y - CARABINER.y) * grow - out;
+    z = CARABINER.z + (z - CARABINER.z) * grow;
+    const u = (((along + across / FRAME_LENGTH) % 1) + 1) % 1;
+    const p = FRAME.getPointAt(u);
+    const t = FRAME.getTangentAt(u);
+    // Into the carabiner: the tangent turned a quarter turn (up, along the bottom bar).
+    return [CARABINER.x + p.x - t.y * up, CARABINER.y + p.y + t.x * up, z];
+  });
+}
+/** Rope centreline distance from the bar's axis when lying on it. */
+const ON_BAR = CARABINER.barRadius + 0.033 + 0.006;
+const BAR: Rail = { y: CARABINER.y, z: CARABINER.z, radius: CARABINER.barRadius, carabiner: true };
+
+/**
+ * A point on the rope where it lies round the bar at `x`. `angle` runs from the
+ * top (0) down the front (π/2), under (π) and up the back — the same as onRail;
+ * the rope here goes round the other way (front, over the top, down the back), so angles fall.
+ */
+const onBar = (angle: number, x: number, lift = 0): Point3 => [
+  CARABINER.x + x,
+  CARABINER.y + (ON_BAR + lift) * Math.cos(angle),
+  CARABINER.z + (ON_BAR + lift) * Math.sin(angle),
+];
+
+
+/** How far each of a loop's 8 points sits in front of (+) or behind (−) its plane: the crossing's two passes apart. */
+const CROSSING_DEPTH = [-0.02, -0.05, -0.02, 0, 0.015, 0.035, 0.05, 0.03];
+/** A point given relative to the carabiner's bar (x along it, y up, z toward the front). */
+const rel = ([x, y, z]: Point3): Point3 => [CARABINER.x + x, CARABINER.y + y, CARABINER.z + z];
+
+/**
+ * Clove hitch on a carabiner — the climber's tie-in to an anchor — tied the way
+ * climbers tie it, in the middle of the rope: hold the rope below the
+ * carabiner, twist two identical loops side by side, slide the right loop behind
+ * the left, open the gate and clip both loops in; close and lock the gate. Both
+ * strands hang down.
+ *
+ * The finished knot is the clove pattern round the bar: a turn, a diagonal over
+ * the standing part, a second turn the same way round beside the first, and the
+ * other strand out from under the diagonal (it then hangs down the back).
+ */
+export const CLOVE_HITCH_CARABINER_PATH: KnotPath = (() => {
+  // Every pose has the same points, each always the same bit of rope: three on the strand
+  // to the climber, 22 for the two loops and the rope between them, two going down.
+  const climber: Point3[] = [
+    [-0.05, -2.4, 0.42],
+    [-0.1, -1.0, 0.25],
+    [-0.16, -0.4, 0.21],
+  ];
+  const down: Point3[] = [
+    [0.1, -1.6, 0.1],
+    [0.04, -2.4, -0.15],
+  ];
+  // The rope held in a low arch below the carabiner.
+  const held: Point3[] = [
+    ...climber,
+    ...([
+      [-0.15, -0.32], [-0.14, -0.26], [-0.12, -0.21], [-0.09, -0.18], [-0.06, -0.165], [-0.03, -0.16], [0.0, -0.158], [0.03, -0.16],
+      [0.06, -0.165], [0.09, -0.18], [0.12, -0.21], [0.14, -0.26], [0.15, -0.32], [0.16, -0.4], [0.16, -0.48], [0.155, -0.56],
+      [0.15, -0.64], [0.145, -0.72], [0.14, -0.8], [0.135, -0.88], [0.13, -0.96], [0.125, -1.04],
+    ] as [number, number][]).map(([x, y], i): Point3 => [x, y, 0.22 + (CROSSING_DEPTH[i] ?? 0)]),
+    ...down,
+  ];
+  /**
+   * A loop (8 points): up from below left, across behind itself, round, and out across the front heading down right; in the plane z, `dx` to the right.
+   * The two passes where it crosses itself are already apart, front and back, in the rope before it
+   * is twisted (CROSSING_DEPTH), so they never meet as the loop forms.
+   */
+  const loopAt = (dx: number, z: number): Point3[] =>
+    (
+      [
+        [-0.13, -0.27],
+        [-0.09, -0.19],
+        [-0.02, -0.115],
+        [-0.09, -0.04], // its top
+        [-0.165, -0.115],
+        [-0.135, -0.17],
+        [-0.09, -0.19],
+        [-0.04, -0.23],
+      ] as [number, number][]
+    ).map(([x, y], i): Point3 => [x + dx, y, z + CROSSING_DEPTH[i]]);
+  /** A loop shrunk to `size` about its middle and moved by (dx, dy): how it looks as it is first twisted in. */
+  const smallLoop = (dx: number, dy: number, z: number, size: number): Point3[] =>
+    loopAt(0, z).map(([x, y, zz]): Point3 => [(x + 0.09) * size - 0.09 + dx, (y + 0.115) * size - 0.115 + dy, zz]);
+  const loopStarting: Point3[] = [
+    ...climber,
+    ...smallLoop(0.0, -0.1, 0.22, 0.85),
+    [0.0, -0.31, 0.23], [0.05, -0.29, 0.22], [0.1, -0.27, 0.22], [0.13, -0.28, 0.21], [0.15, -0.33, 0.2], [0.155, -0.4, 0.2], [0.16, -0.47, 0.2],
+    [0.155, -0.55, 0.2], [0.15, -0.63, 0.2], [0.145, -0.72, 0.2], [0.14, -0.8, 0.2], [0.135, -0.88, 0.19], [0.13, -0.96, 0.18], [0.125, -1.04, 0.17],
+    ...down,
+  ];
+  const oneLoop: Point3[] = [
+    ...climber,
+    ...loopAt(0, 0.22),
+    // The rope on from the loop already runs where it will lead to the second loop.
+    [-0.01, -0.27, 0.25], [0.0, -0.34, 0.245], [0.005, -0.43, 0.24], [0.02, -0.53, 0.235], [0.07, -0.62, 0.225],
+    ...([
+      [0.12, -0.66], [0.17, -0.7], [0.21, -0.76], [0.23, -0.84], [0.24, -0.92], [0.24, -1.0], [0.235, -1.08], [0.23, -1.16], [0.22, -1.24],
+    ] as [number, number][]).map(([x, y], i): Point3 => [x, y, 0.21 + (CROSSING_DEPTH[i] ?? 0)]),
+    ...down,
+  ];
+  // The strand swung out to the right and up over itself in an open hook…
+  const secondSwung: Point3[] = [
+    ...climber,
+    ...loopAt(0, 0.22),
+    [-0.01, -0.27, 0.25], [0.0, -0.34, 0.245], [0.005, -0.43, 0.24], [0.02, -0.53, 0.235], [0.07, -0.62, 0.225],
+    [0.12, -0.66, 0.2], [0.17, -0.67, 0.17], [0.24, -0.62, 0.22], [0.26, -0.52, 0.22], [0.22, -0.44, 0.235], [0.16, -0.42, 0.255], [0.11, -0.45, 0.27], [0.12, -0.54, 0.27],
+    [0.14, -0.65, 0.27],
+    ...down,
+  ];
+  // …and closed into a second loop, down across the front of where it started.
+  const secondStarting: Point3[] = [
+    ...climber,
+    ...loopAt(0, 0.22),
+    [-0.01, -0.27, 0.25], [0.0, -0.34, 0.245], [0.005, -0.43, 0.24], [0.02, -0.53, 0.235], [0.07, -0.62, 0.225],
+    ...smallLoop(0.25, -0.36, 0.22, 0.85),
+    [0.2, -0.75, 0.2],
+    ...down,
+  ];
+  const twoLoops: Point3[] = [
+    ...climber,
+    ...loopAt(0, 0.22),
+    [-0.01, -0.27, 0.25], [0.0, -0.31, 0.24], [0.04, -0.34, 0.23], [0.08, -0.33, 0.22], [0.1, -0.3, 0.21],
+    ...loopAt(0.23, 0.22),
+    [0.16, -0.4, 0.2],
+    ...down,
+  ];
+  // The right loop taken back behind the left one's plane…
+  const secondBack: Point3[] = [
+    ...climber,
+    ...loopAt(0, 0.22),
+    [-0.01, -0.27, 0.25], [0.0, -0.31, 0.22], [0.04, -0.34, 0.17], [0.08, -0.33, 0.12], [0.1, -0.3, 0.08],
+    ...loopAt(0.23, 0.07),
+    [0.19, -0.4, 0.06],
+    ...down,
+  ];
+  // …and slid across behind it: a stack of two. Between them the rope runs down in
+  // front of the strand leaving the back loop, then left behind the front loop's lower strand.
+  const stackRegion: Point3[] = [
+    ...loopAt(0, 0.27),
+    [0.03, -0.3, 0.27],
+    [0.04, -0.37, 0.22],
+    [-0.03, -0.43, 0.2],
+    [-0.11, -0.4, 0.13],
+    [-0.16, -0.33, 0.07],
+    ...loopAt(0, 0.07),
+    [-0.03, -0.4, 0.05],
+  ];
+  const stacked: Point3[] = [...climber, ...stackRegion, [0.03, -1.0, 0.05], [0.04, -2.4, -0.15]];
+  /**
+   * The stack turned `angle` round (a quarter turn faces it along the bar, the left
+   * loop to the left), its loops opened up by `grow` and spread apart by `spread`,
+   * centred at `at`.
+   */
+  const turned = (at: Point3, angle: number, grow: number, spread = 1): Point3[] =>
+    stackRegion.map(([x, y, z]): Point3 => {
+      const dx = (x + 0.09) * grow;
+      const dy = (y + 0.115) * grow;
+      const dz = (z - 0.17) * spread;
+      return [at[0] + dx * Math.cos(angle) - dz * Math.sin(angle), at[1] + dy, at[2] + dx * Math.sin(angle) + dz * Math.cos(angle)];
+    });
+  const below = (to: Point3): Point3[] => [to, [0.04, -2.4, -0.15]];
+  /** The strands into and out of the stack, kept clear of it: up from the climber to its first loop, and down from its last. */
+  const leads = (at: Point3, angle: number): [Point3[], Point3[]] => [
+    [[-0.05, -2.4, 0.42], [-0.1, -1.0, 0.25], [at[0] - 0.1 * Math.sin(angle) - 0.04 * Math.cos(angle), at[1] - 0.55, at[2] + 0.1 * Math.cos(angle)]],
+    below([at[0] + 0.08 * Math.sin(angle) - 0.03 * Math.cos(angle), at[1] - 0.75, at[2] - 0.07 * Math.cos(angle)]),
+  ];
+  const around = (at: Point3, angle: number, grow: number, spread = 1): Point3[] => {
+    const [into, out] = leads(at, angle);
+    return [...into, ...turned(at, angle, grow, spread), ...out];
+  };
+  // The finished knot: the two loops drawn down onto the bar, spread a little along it.
+  const tied = around([0, 0, 0], PI / 2, 1.0, 0.85);
+  // The stack, in the shape it will have on the bar but drawn close together, carried to the
+  // gate's nose: beside it outside, then — the sleeve unscrewed, the gate pressed in — in through
+  // the gap just above the nose and down onto the corner of the bar; the gate shuts above it and
+  // the loops slide along the bar into place. (Their rope follows the carabiner the whole way.)
+  const tiedAt = tied.map(rel);
+  // (The strands into and out of the stack hang straight down from it wherever it is.)
+  const carried = (along: number, out: number, grow: number, spread: number): Point3[] => {
+    const stack = onFrame(tiedAt.slice(3, 25), along, out, grow, spread);
+    const [ax, ay, az] = stack[0];
+    const [bx, by, bz] = stack[stack.length - 1];
+    return [...tiedAt.slice(0, 2), [ax - 0.02, ay - 0.3, az + 0.04], ...stack, [bx + 0.02, by - 0.35, bz - 0.03], tiedAt[26]];
+  };
+  /**
+   * The stack just as it was made — two loops, one behind the other — carried whole, its loops'
+   * holes turned to face along the carabiner at `along` (0–1 round the outline), `out` beyond it;
+   * the strands into and out of it hanging straight down. Turned, not mirrored, so nothing
+   * passes through anything on the way.
+   */
+  const stackAt = (along: number, out: number, grow: number, shift: Point3 = [0, 0, 0]): Point3[] => {
+    const f = FRAME.getPointAt(along);
+    const t = FRAME.getTangentAt(along);
+    // Into the carabiner, in its plane.
+    const nx = -t.y;
+    const ny = t.x;
+    const cx = CARABINER.x + f.x - nx * out;
+    const cy = CARABINER.y + f.y - ny * out;
+    const stack = stackRegion.map(([x, y, z]): Point3 => {
+      const dx = (x + 0.09) * grow;
+      const dy = (y + 0.115) * grow;
+      const dz = z - 0.17;
+      // Up the stack → into the carabiner, its front loop → back along the outline, across → front.
+      return [cx + nx * dy - t.x * dz + shift[0], cy + ny * dy - t.y * dz + shift[1], CARABINER.z + dx + shift[2]];
+    });
+    const [ax, ay, az] = stack[0];
+    const [bx, by, bz] = stack[stack.length - 1];
+    return [rel([-0.05, -2.4, 0.42]), rel([-0.1, -1.0, 0.25]), [ax - 0.02, ay - 0.3, az + 0.04], ...stack, [bx + 0.02, by - 0.35, bz - 0.03], rel([0.04, -2.4, -0.15])];
+  };
+  const atGap = frameAt(6.8);
+  const atCorner = frameAt(3.8);
+  const poses = [
+    ...[held, loopStarting, oneLoop, secondSwung, secondStarting, twoLoops, secondBack, stacked].map((pose) => pose.map(rel)),
+    stackAt(atGap, 0.3, 1.7, [0.05, -0.15, 0.3]), // brought up in front of the carabiner, the loops held open…
+    stackAt(atGap, 0.3, 1.7), // …beside the gate, by the nose
+    stackAt(atGap, -0.03, 1.65), // in through the gap
+    stackAt(atCorner, -0.02, 1.6), // down onto the corner of the bar
+    carried(atCorner + (BAR_MIDDLE - atCorner) / 3, 0, 1, 0.8), // drawing into the clove as it slides along
+    carried(atCorner + ((BAR_MIDDLE - atCorner) * 2) / 3, 0, 1, 0.85),
+    tiedAt,
+  ];
+  return {
+    points: poses[poses.length - 1],
+    traceFrom: 0,
+    stepEnds: [],
+    knotFrom: 2,
+    tailFrom: tied.length - 3,
+    rail: BAR,
+    clip: {
+      poses,
+      // You hold the first loop, then the second (from its first loop on), then the stack.
+      // Making the loops gets as long as clipping them in, so each move can be followed.
+      times: [0, 0.1, 0.22, 0.27, 0.33, 0.42, 0.5, 0.58, 0.64, 0.69, 0.76, 0.83, 0.9, 0.95, 1],
+      handle: [6, 6, 6, 19, 19, 19, 19, 19, 6, 6, 6, 6, 6, 6, 6],
+      stepEnds: [0.22, 0.42, 0.58, 1],
+      gate: { unscrew: [0.69, 0.71], open: [0.71, 0.74], close: [0.84, 0.87], lock: [0.87, 0.9] },
+      seconds: 12,
+    },
+  };
+})();
+
+/**
+ * Munter hitch (Italian hitch, HMS — "half clove hitch belay"), tied the way
+ * climbers tie it: the rope is clipped in — the strand to the climber comes up
+ * behind the carabiner (along the rock), over the bar, and hangs down in front.
+ * You twist a loop in the hanging strand, bring it to the gate, open the gate and
+ * clip the loop in so it drops over the bar beside the first pass; close and lock
+ * the gate. Both strands hang down; pulling the free (front) strand runs the rope
+ * round the carabiner and round itself with plenty of friction.
+ *
+ * The finished knot: the rope crosses the bar twice the same way (back over to
+ * the front), and between the two passes the loop's lower side wraps the free
+ * strand just below the carabiner — the collar.
+ */
+export const MUNTER_HITCH_PATH: KnotPath = (() => {
+  const { y, z } = CARABINER;
+  // The strand to the climber: up behind the carabiner and over the bar (never moves).
+  const load: Point3[] = [
+    [-0.09, y - 2.4, z - 0.13],
+    [-0.08, y - 1.0, z - 0.115],
+    [-0.07, y - 0.22, z - 0.085],
+    onBar(-PI / 2 - 0.45, -0.065),
+    onBar(-PI / 2, -0.062),
+    onBar(-PI / 4, -0.06),
+    onBar(0, -0.058),
+    onBar(PI / 4, -0.055),
+    onBar(PI / 2, -0.052),
+    onBar(PI / 2 + 0.25, -0.05),
+  ];
+  // The rest — the free strand that the loop is made in — in each pose (14 points, then 2 far below).
+  const hanging: Point3[] = [
+    ...Array.from({ length: 14 }, (_, i): Point3 => [-0.05, y - 0.05 - 0.075 * i, z + 0.1 + 0.004 * i]),
+    [-0.05, y - 1.6, z + 0.25],
+    [-0.05, y - 2.6, z + 0.38],
+  ];
+  const below: Point3[] = [
+    [0.045, y - 1.2, z + 0.22],
+    [0.05, y - 2.4, z + 0.42],
+  ];
+  // A small loop twisted in the strand, below the carabiner…
+  const loopStarted: Point3[] = [
+    [-0.05, y - 0.05, z + 0.1],
+    [-0.048, y - 0.14, z + 0.105],
+    [-0.04, y - 0.23, z + 0.13],
+    [0.0, y - 0.3, z + 0.18],
+    [0.06, y - 0.31, z + 0.185],
+    [0.09, y - 0.26, z + 0.15],
+    [0.08, y - 0.2, z + 0.13],
+    [0.06, y - 0.19, z + 0.115],
+    [0.042, y - 0.24, z + 0.09],
+    [0.04, y - 0.32, z + 0.078],
+    [0.035, y - 0.4, z + 0.085],
+    [0.04, y - 0.5, z + 0.1],
+    [0.045, y - 0.6, z + 0.105],
+    [0.045, y - 0.72, z + 0.11],
+    ...below,
+  ];
+  // …grown: across in front to the right, up, over and down behind where it started.
+  const loopMade: Point3[] = [
+    [-0.05, y - 0.05, z + 0.1],
+    [-0.045, y - 0.15, z + 0.11],
+    [-0.02, y - 0.28, z + 0.17],
+    [0.06, y - 0.33, z + 0.185],
+    [0.14, y - 0.29, z + 0.16],
+    [0.17, y - 0.2, z + 0.14],
+    [0.13, y - 0.11, z + 0.13], // the top of the loop
+    [0.075, y - 0.11, z + 0.12],
+    [0.04, y - 0.17, z + 0.1],
+    [0.035, y - 0.25, z + 0.08],
+    [0.04, y - 0.33, z + 0.072],
+    [0.04, y - 0.42, z + 0.085],
+    [0.045, y - 0.52, z + 0.1],
+    [0.045, y - 0.64, z + 0.11],
+    ...below,
+  ];
+  const tied: Point3[] = [
+    [-0.05, y - 0.05, z + 0.1],
+    [-0.025, y - 0.11, z + 0.145],
+    [0.04, y - 0.145, z + 0.165], // the collar, in front of the free strand…
+    [0.1, y - 0.165, z + 0.12],
+    [0.135, y - 0.155, z + 0.03],
+    [0.11, y - 0.11, z - 0.05], // …round under the carabiner to the back…
+    onBar(-PI / 2 - 0.8, 0.075, 0.01),
+    onBar(-PI / 2 - 0.35, 0.055),
+    onBar(-PI / 4, 0.054),
+    onBar(0, 0.052), // …over the bar a second time…
+    onBar(PI / 4, 0.048),
+    onBar(PI / 2, 0.045),
+    onBar(PI / 2 + 0.55, 0.045),
+    [0.04, y - 0.32, z + 0.09], // …and down the front, behind the collar: the free strand
+    ...below,
+  ];
+  // The loop, in the shape it will have on the bar, brought up to the gate's nose (bottom right):
+  // beside it outside, then — the sleeve unscrewed, the gate pressed in — in through the gap just
+  // above the nose and down onto the corner of the bar; the gate shuts above it, and the loop
+  // slides along the bar into place beside the first pass. (Its rope follows the carabiner the
+  // whole way. Its lower side — the collar, where it will cross the free strand — stays below
+  // the carabiner, as it is in the finished knot; only its top goes to the gate. The free strand
+  // below it always hangs straight down.)
+  const collar = tied.slice(1, 4);
+  const loopRegion = tied.slice(4, 13);
+  const atGap = frameAt(6.45) - 0.05 / FRAME_LENGTH;
+  const atCorner = frameAt(4.0) - 0.05 / FRAME_LENGTH;
+  const carried = (along: number, out: number, grow: number, shift: Point3 = [0, 0, 0]): Point3[] => {
+    const loop = onFrame(loopRegion, along, out, grow).map(([x, y, z]): Point3 => [x + shift[0], y + shift[1], z + shift[2]]);
+    const [x, y, z] = loop[loop.length - 1];
+    return [tied[0], ...collar, ...loop, [x, y - 0.28, z], ...below];
+  };
+  const sliding = [1, 2, 3].map((k) => carried(atCorner + ((BAR_MIDDLE - atCorner) * k) / 4, 0, 1));
+  const poses = [
+    hanging,
+    loopStarted,
+    loopMade,
+    carried(atGap, 0.15, 1.1), // up beside the gate, by the nose
+    carried(atGap, 0, 1.05), // in through the gap
+    carried(atCorner, 0, 1), // down onto the corner of the bar
+    ...sliding,
+    tied,
+  ].map((rest) => [...load, ...rest]);
+  const loop = (i: number): number => load.length + i;
+  return {
+    points: poses[poses.length - 1],
+    traceFrom: 0,
+    stepEnds: [],
+    knotFrom: 2,
+    tailFrom: loop(13),
+    rail: BAR,
+    clip: {
+      poses,
+      times: [0, 0.12, 0.26, 0.4, 0.55, 0.65, 0.75, 0.83, 0.91, 1],
+      handle: [loop(6), loop(6), loop(6), loop(9), loop(9), loop(9), loop(9), loop(9), loop(9), loop(9)],
+      stepEnds: [0.26, 0.4, 1],
+      gate: { unscrew: [0.4, 0.44], open: [0.44, 0.5], close: [0.66, 0.71], lock: [0.71, 0.76] },
+      seconds: 10,
+    },
   };
 })();
 

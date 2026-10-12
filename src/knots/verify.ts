@@ -1,6 +1,10 @@
 import * as THREE from 'three';
 import type { RopePath } from '../trace/ropePath';
+import { CARABINER_OUTLINE } from './paths';
 import type { KnotDefinition } from './types';
+
+/** The rope's radius (as drawn in main.ts), for telling rope lying on a bar from rope near it. */
+const ROPE_RADIUS = 0.033;
 
 /**
  * Dev-only checks that each authored knot really is the knot it claims to be,
@@ -365,6 +369,74 @@ function clovePattern(u: Unrolled): { ok: boolean; detail: string } {
   };
 }
 
+/**
+ * The Munter hitch ("half clove hitch") round a bar: the clove pattern cut short —
+ * one crossing, where the rope comes back across itself after a full turn (read
+ * from either end, so the strand on top comes first or second), and about one and a half turns round
+ * the bar in all (counted from where the rope first touches the bar to where it
+ * leaves, so a little over), all the same way. (A round turn has no crossing; a clove hitch
+ * two, and two full turns.)
+ */
+function munterPattern(u: Unrolled, first: number, last: number): { ok: boolean; detail: string } {
+  const seq = u.passages.map((p) => `${p.crossing}${p.over ? 'o' : 'u'}`).join(' ');
+  const deg = (r: number): number => Math.round((r * 180) / Math.PI);
+  const total = u.turn(first, last);
+  if (u.passages.length !== 2) return { ok: false, detail: `${u.passages.length / 2} crossings (want 1): ${seq}; ${deg(total)}° round` };
+  const [p1, p2] = u.passages;
+  const shapeOk = p1.over !== p2.over && p1.crossing === p2.crossing;
+  const turn = u.turn(p1.sample, p2.sample);
+  const turnOk = Math.abs(Math.abs(turn) - 2 * Math.PI) < Math.PI / 3 && Math.abs(Math.abs(total) - 3 * Math.PI) < Math.PI / 2 && Math.sign(turn) === Math.sign(total);
+  return { ok: shapeOk && turnOk, detail: `crossing ${seq}; a turn of ${deg(turn)}° before crossing over the standing part, ${deg(total)}° round in all` };
+}
+
+/**
+ * How many times the rope passes through the carabiner (its linking number with
+ * the carabiner's outline), its two ends joined far below. Counted from signed
+ * crossings in the front view, where the carabiner lies flat.
+ */
+function linkingWithCarabiner(path: RopePath, tightness: number, bar: { y: number; z: number }): number {
+  const p = new THREE.Vector3();
+  const rope: [number, number, number][] = [];
+  for (let s = 0; s <= path.end; s += 2) {
+    path.pointAt(s, tightness, p);
+    rope.push([p.x, p.y, p.z]);
+  }
+  const first = rope[0];
+  const last = rope[rope.length - 1];
+  rope.push([last[0], last[1] - 60, last[2]], [first[0], first[1] - 60, first[2]], first);
+  const ring = CARABINER_OUTLINE.map(([x, y]): [number, number, number] => [x, bar.y + y, bar.z]);
+  ring.push(ring[0]);
+  let sum = 0;
+  for (let i = 0; i < rope.length - 1; i++) {
+    for (let j = 0; j < ring.length - 1; j++) {
+      const hit = intersect([rope[i][0], rope[i][1], 0], [rope[i + 1][0], rope[i + 1][1], 0], [ring[j][0], ring[j][1], 0], [ring[j + 1][0], ring[j + 1][1], 0]);
+      if (!hit) continue;
+      const z = rope[i][2] + (rope[i + 1][2] - rope[i][2]) * hit[0];
+      const ax = rope[i + 1][0] - rope[i][0];
+      const ay = rope[i + 1][1] - rope[i][1];
+      const bx = ring[j + 1][0] - ring[j][0];
+      const by = ring[j + 1][1] - ring[j][1];
+      sum += Math.sign(ax * by - ay * bx) * (z > bar.z ? 1 : -1);
+    }
+  }
+  return sum / 2;
+}
+
+/** Samples where the rope first and last lies on a bar (within `slack` of touching it). */
+function onBarSpan(path: RopePath, tightness: number, rail: { y: number; z: number; radius: number }, ropeRadius: number, slack: number): [number, number] {
+  const p = new THREE.Vector3();
+  let first = -1;
+  let last = -1;
+  for (let s = 0; s <= path.end; s++) {
+    path.pointAt(s, tightness, p);
+    if (Math.hypot(p.y - rail.y, p.z - rail.z) <= rail.radius + ropeRadius + slack) {
+      if (first < 0) first = s;
+      last = s;
+    }
+  }
+  return [first, last];
+}
+
 // ---- Per-knot checks ----------------------------------------------------------------------
 
 export interface CheckResult {
@@ -440,6 +512,28 @@ export function verifyKnot(knot: KnotDefinition, path: RopePath, tightness: numb
       const u = unroll(path, tightness, standing, 0.2, turnEnd, end, 0.02);
       const c = clovePattern(u);
       results.push({ check: 'two half hitches the same way (a clove hitch round the standing part)', ok: c.ok, detail: c.detail });
+      break;
+    }
+    case 'clove-hitch-carabiner': {
+      const bar = knot.path!.rail!;
+      // Reach far enough to take in the loops' lower sides below the bar while they are loose.
+      const u = unroll(path, tightness, { at: new THREE.Vector3(0, bar.y, bar.z), along: 'x' }, bar.radius * 10, 0, end);
+      const c = clovePattern(u);
+      results.push({ check: 'clove hitch round the carabiner', ok: c.ok, detail: c.detail });
+      const lk = linkingWithCarabiner(path, tightness, bar);
+      results.push({ check: 'rope passes through the carabiner twice, the same way', ok: Math.abs(lk) === 2, detail: `linking number ${lk}` });
+      break;
+    }
+    case 'munter-hitch': {
+      const bar = knot.path!.rail!;
+      // Reach far enough to take in the collar just below the bar.
+      const u = unroll(path, tightness, { at: new THREE.Vector3(0, bar.y, bar.z), along: 'x' }, bar.radius * 8, 0, end);
+      const [first, last] = onBarSpan(path, tightness, bar, ROPE_RADIUS, 0.012);
+      const c = munterPattern(u, first, last);
+      results.push({ check: 'Munter hitch round the carabiner', ok: c.ok, detail: c.detail });
+      // Both passes go through the carabiner the same way; a loop twisted the other way would give 0 and slide off.
+      const lk = linkingWithCarabiner(path, tightness, bar);
+      results.push({ check: 'rope passes through the carabiner twice, the same way', ok: Math.abs(lk) === 2, detail: `linking number ${lk}` });
       break;
     }
     default:

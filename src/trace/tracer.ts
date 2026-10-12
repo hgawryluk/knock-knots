@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import type { RopePath } from './ropePath';
+import { HANDOFF, type RopePath } from './ropePath';
 
 /** How close (px) you must press to the working end to pick it up. */
 const GRAB_PX = 44;
@@ -32,6 +32,8 @@ export class Tracer {
 
   private path: RopePath | null = null;
   private stepEnd = 0;
+  /** Set when a step ends with a change of hold: the drag ends there. */
+  private letGo = false;
   private tracing = -1;
   private time = 0;
   private dirty = true;
@@ -108,7 +110,7 @@ export class Tracer {
     this.ring.quaternion.copy(this.camera.quaternion);
     this.ring.scale.setScalar(1 + Math.sin(this.time * 5) * 0.12);
     this.ring.visible = !this.finished;
-    this.path.pointAt(this.shown, 0, this.tip.position);
+    this.path.handleAt(this.shown, this.tip.position);
     this.tip.quaternion.copy(this.camera.quaternion);
     this.tip.visible = !this.finished;
     this.tip.material.opacity = this.tracing >= 0 ? 0.95 : 0.55 + Math.sin(this.time * 4) * 0.25;
@@ -116,7 +118,13 @@ export class Tracer {
 
   private setProgress(progress: number): void {
     if (!this.path) return;
-    const clamped = Math.min(Math.max(progress, this.path.traceFrom), this.path.end);
+    let clamped = Math.min(Math.max(progress, this.path.traceFrom), this.path.end);
+    // At the end of a step where you take hold of another bit of rope, you let go: the marker
+    // moves there and you pick it up again.
+    if (clamped >= this.stepEnd - HANDOFF && this.stepEnd < this.path.end && this.progress < this.stepEnd && this.path.handleJumps(this.stepEnd)) {
+      clamped = Math.min(this.stepEnd + HANDOFF + 0.5, this.path.end);
+      this.letGo = true;
+    }
     if (clamped === this.progress && !this.dirty) return;
     this.progress = clamped;
     this.stepEnd = this.path.stepEnds.find((end) => end > this.progress + 0.5) ?? this.path.end;
@@ -126,8 +134,8 @@ export class Tracer {
   private rebuildGhosts(path: RopePath): void {
     const tube = (from: number, to: number, radius: number): THREE.BufferGeometry => {
       const points: THREE.Vector3[] = [];
-      for (let s = from; s < to; s += GHOST_STRIDE) points.push(path.pointAt(s, 0, new THREE.Vector3()));
-      points.push(path.pointAt(to, 0, new THREE.Vector3()));
+      for (let s = from; s < to; s += GHOST_STRIDE) points.push(path.handleAt(s, new THREE.Vector3()));
+      points.push(path.handleAt(to, new THREE.Vector3()));
       if (points.length < 2) return new THREE.BufferGeometry();
       return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), points.length * 2, radius, 8, false);
     };
@@ -135,11 +143,11 @@ export class Tracer {
     this.step.geometry.dispose();
     this.ghost.geometry = tube(this.stepEnd, path.end, this.radius * 0.9);
     this.step.geometry = tube(this.progress, this.stepEnd, this.radius * 0.55);
-    path.pointAt(this.stepEnd, 0, this.ring.position);
+    path.handleAt(this.stepEnd, this.ring.position);
   }
 
   private screenOf(sample: number, rect: DOMRect): [number, number] {
-    this.path!.pointAt(sample, 0, this.point).project(this.camera);
+    this.path!.handleAt(sample, this.point).project(this.camera);
     return [rect.left + ((this.point.x + 1) / 2) * rect.width, rect.top + ((1 - this.point.y) / 2) * rect.height];
   }
 
@@ -184,6 +192,10 @@ export class Tracer {
       }
     }
     if (bestDistance <= FOLLOW_PX) this.setProgress(best);
+    if (this.letGo) {
+      this.letGo = false;
+      this.cancel();
+    }
   };
 
   private onPointerUp = (event: PointerEvent): void => {

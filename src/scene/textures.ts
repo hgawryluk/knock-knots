@@ -124,3 +124,71 @@ export function createGroundTexture(size = 1024, seed = 3): THREE.CanvasTexture 
 
   return toTexture(canvas);
 }
+
+/** Seamless weathered granite: grey speckled stone with darker streaks, pale lichen patches and fine cracks. */
+export function createRockTexture(size = 1024, seed = 5): THREE.CanvasTexture {
+  const [canvas, ctx] = makeCanvas(size);
+  const tone = createNoise2D(seed);
+  const grain = createNoise2D(seed + 7);
+  const lichenNoise = createNoise2D(seed + 13);
+  const rng = createRng(seed);
+
+  const dark: Rgb = [112, 109, 104];
+  const light: Rgb = [160, 156, 149];
+  const warm: Rgb = [150, 132, 112];
+  const lichen: Rgb = [178, 180, 158];
+
+  const period = 4;
+  const image = ctx.createImageData(size, size);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const u = (x / size) * period;
+      const v = (y / size) * period;
+      const t = fbm(tone, u, v, 5, period) * 0.5 + 0.5;
+      const g = fbm(grain, u * 16, v * 16, 2, period * 16) * 0.5 + 0.5;
+      // Water streaks run down the rock.
+      const streak = fbm(tone, u * 3 + 17, v * 0.4, 3, period * 3) * 0.5 + 0.5;
+      let c = mix(dark, light, smoothstep(0.25, 0.75, t));
+      c = mix(c, warm, smoothstep(0.55, 0.8, fbm(grain, u * 2 + 5, v * 2, 3, period * 2) * 0.5 + 0.5) * 0.35);
+      c = mix(c, dark, smoothstep(0.62, 0.8, streak) * 0.45);
+      // Speckles of the crystals.
+      const speck = g > 0.72 ? 1.18 : g < 0.25 ? 0.78 : 1;
+      c = [c[0] * speck, c[1] * speck, c[2] * speck];
+      // Sparse, small patches of pale lichen.
+      c = mix(c, lichen, smoothstep(0.7, 0.78, fbm(lichenNoise, u * 3, v * 3, 4, period * 3) * 0.5 + 0.5) * 0.4);
+      const i = (y * size + x) * 4;
+      image.data[i] = c[0];
+      image.data[i + 1] = c[1];
+      image.data[i + 2] = c[2];
+      image.data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(image, 0, 0);
+
+  // Fine cracks.
+  ctx.strokeStyle = 'rgba(40, 38, 36, 0.55)';
+  for (let i = 0; i < 26; i++) {
+    let px = rng() * size;
+    let py = rng() * size;
+    let angle = rng() * Math.PI * 2;
+    ctx.lineWidth = 1 + rng() * 1.5;
+    const steps = 6 + ((rng() * 10) | 0);
+    for (let s = 0; s < steps; s++) {
+      const length = 10 + rng() * 25;
+      angle += (rng() - 0.5) * 0.9;
+      const nx = px + Math.cos(angle) * length;
+      const ny = py + Math.sin(angle) * length;
+      const [ax, ay, bx, by] = [px, py, nx, ny];
+      drawWrapped(size, ax, ay, length + 4, (qx, qy) => {
+        ctx.beginPath();
+        ctx.moveTo(qx, qy);
+        ctx.lineTo(qx + bx - ax, qy + by - ay);
+        ctx.stroke();
+      });
+      px = nx;
+      py = ny;
+    }
+  }
+
+  return toTexture(canvas);
+}
