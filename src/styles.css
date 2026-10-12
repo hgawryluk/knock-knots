@@ -222,18 +222,39 @@ body {
   }
 }
 
-@media (max-width: 720px) {
-  .knot-panel {
-    top: auto;
-    bottom: 56px;
-    left: 16px;
-    right: 16px;
-    width: auto;
-  }
-  .knot-summary {
-    display: none;
-  }
+/* The knot's name as a button: only on a phone, where it opens the folded list of knots. */
+.knot-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--chip-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
 }
+
+.knot-toggle-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.knot-toggle-arrow {
+  color: var(--muted);
+  transition: transform 200ms ease;
+}
+
+.knot-panel.open .knot-toggle-arrow {
+  transform: rotate(180deg);
+}
+
 
 /* Each section: its name (level with Reset) over a full-width row of numbered knots. */
 .knot-levels {
@@ -497,6 +518,17 @@ body {
     right: 16px;
     transform: translateY(-8px);
     width: min(320px, calc(100% - 32px));
+  }
+  /* On a phone the bar on top already shows the step: tips sit low, just above the player. */
+  @media (max-width: 720px) {
+    .coach {
+      top: auto;
+      bottom: 96px;
+      left: 12px;
+      right: 12px;
+      width: auto;
+      transform: translateY(8px);
+    }
   }
   .coach.visible {
     transform: none;
@@ -939,5 +971,69 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .orbit-icon {
     animation: none;
+  }
+}
+
+/* On a phone: a slim bar across the top — menu, the knot (tap to choose another), reset — and the
+   current step under it; the list of knots folds out only when asked for. */
+@media (max-width: 720px) {
+  .knot-panel {
+    top: 62px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    padding: 8px 10px 10px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 6px;
+  }
+  .knot-menu {
+    grid-column: 1;
+    grid-row: 1;
+    margin: 0;
+  }
+  .knot-toggle {
+    display: flex;
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .knot-reset {
+    position: static;
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .knot-type,
+  .knot-name,
+  .knot-summary,
+  .knot-levels {
+    display: none;
+  }
+  .knot-panel.open .knot-levels {
+    display: flex;
+    grid-column: 1 / -1;
+    margin: 12px 0 2px;
+  }
+  .knot-steps {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+  }
+  .knot-steps li:not(.current) {
+    display: none;
+  }
+  .knot-status {
+    grid-column: 1 / -1;
+    height: auto;
+    margin-top: 6px;
+  }
+  .knot-status:not(.visible) {
+    display: none;
+  }
+}
+
+/* On a phone the bar on top already gives the step: only "tied!" and other news pop up here. */
+@media (max-width: 720px) {
+  .coach:not(.success) {
+    display: none;
   }
 }
