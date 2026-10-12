@@ -51,14 +51,15 @@ export class KnotPanel {
     for (const section of sections) {
       const row = document.createElement('div');
       row.className = 'knot-section';
-      row.innerHTML = `<span class="knot-section-name"></span><div class="knot-section-levels"></div>`;
+      row.innerHTML = `<span class="knot-section-name"></span><div class="knot-section-levels"></div><span class="knot-soon-note"></span>`;
       const buttons = row.querySelector('.knot-section-levels')!;
       levels.forEach((level, index) => {
         if (level.section !== section.id) return;
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'knot-level';
-        button.textContent = String(buttons.childElementCount + 1);
+        // The number; on a phone, where the open list is a column, the name beside it too.
+        button.innerHTML = `<span class="knot-level-n">${buttons.childElementCount + 1}</span><span class="knot-level-name"></span>`;
         button.addEventListener('click', () => {
           onSelect(index);
           this.setOpen(false);
@@ -90,9 +91,11 @@ export class KnotPanel {
     const menu = this.panel.querySelector<HTMLElement>('.knot-menu')!;
     menu.textContent = t('menu');
     menu.title = t('menuTitle');
+    menu.setAttribute('aria-label', t('menuTitle'));
     const reset = this.panel.querySelector<HTMLElement>('.knot-reset')!;
     reset.textContent = t('reset');
     reset.title = t('resetTitle');
+    reset.setAttribute('aria-label', t('resetTitle'));
     this.panel.querySelector('.knot-levels')!.setAttribute('aria-label', t('knots'));
     this.toggle.title = t('knots');
     for (const section of this.sections) this.rows.get(section.id)!.querySelector('.knot-section-name')!.textContent = sectionText(section).name;
@@ -119,7 +122,13 @@ export class KnotPanel {
       button.title = `${knotText(levels[index]).name}${note}`;
       button.setAttribute('aria-label', button.title);
       button.setAttribute('aria-current', index === selected ? 'true' : 'false');
+      button.querySelector('.knot-level-name')!.textContent = knotText(levels[index]).name;
     });
+    // Under each section on a phone: how many more knots are still to come.
+    for (const [section, row] of this.rows) {
+      const soon = levels.filter((level, i) => level.section === section && states[i] === 'soon').length;
+      row.querySelector('.knot-soon-note')!.textContent = soon ? t('moreSoon', { n: soon }) : '';
+    }
   }
 
   setKnot(knot: KnotDefinition): void {
@@ -132,6 +141,8 @@ export class KnotPanel {
     this.steps.replaceChildren();
     this.items = text.steps.map((step) => {
       const li = document.createElement('li');
+      // Numbered here, not by a CSS counter: on a phone only the current step shows.
+      li.dataset.n = String(this.steps.childElementCount + 1);
       li.innerHTML = `<span class="step-title"></span><span class="step-hint"></span>`;
       li.querySelector('.step-title')!.textContent = step.title;
       li.querySelector('.step-hint')!.textContent = step.hint;

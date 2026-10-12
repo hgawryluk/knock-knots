@@ -140,7 +140,7 @@ body {
 }
 
 .knot-steps li::before {
-  content: counter(step);
+  content: attr(data-n);
   grid-row: span 2;
   width: 20px;
   height: 20px;
@@ -324,6 +324,12 @@ body {
 
 .knot-level.soon {
   border-style: dashed;
+}
+
+/* The name beside the number and the coming-soon count show only on a phone. */
+.knot-level-name,
+.knot-soon-note {
+  display: none;
 }
 
 /* ---- Demo player / try bar --------------------------------------------------------------- */
@@ -1034,6 +1040,103 @@ body {
 /* On a phone the bar on top already gives the step: only "tied!" and other news pop up here. */
 @media (max-width: 720px) {
   .coach:not(.success) {
+    display: none;
+  }
+}
+
+/* Phone, finer points: round icon buttons either side of the knot's name, the bar right at the
+   top (the language switch waits in the main menu), and the open list as a column of names. */
+@media (max-width: 720px) {
+  body:has(#ui:not(.away)) .lang-switch {
+    display: none;
+  }
+  .knot-panel {
+    top: calc(10px + env(safe-area-inset-top));
+  }
+  .knot-menu,
+  .knot-reset {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 1px solid var(--chip-border);
+    border-radius: 50%;
+    color: var(--text);
+    font-size: 0;
+  }
+  .knot-menu::before {
+    content: '‹';
+    font-size: 22px;
+    line-height: 1;
+    margin-top: -2px;
+  }
+  .knot-reset::before {
+    content: '↺';
+    font-size: 18px;
+    line-height: 1;
+  }
+  .knot-toggle {
+    height: 38px;
+  }
+  .knot-section-name {
+    margin: 0 0 6px 2px;
+  }
+  .knot-section-levels {
+    flex-direction: column;
+    gap: 2px;
+  }
+  .knot-level {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    height: auto;
+    padding: 9px 10px;
+    border-color: transparent;
+    border-radius: 10px;
+    font-size: 15px;
+    text-align: left;
+  }
+  .knot-level-n {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 26px;
+    height: 26px;
+    border: 1px solid var(--chip-border);
+    border-radius: 50%;
+    font-size: 12px;
+  }
+  .knot-level-name {
+    display: block;
+    color: var(--text);
+  }
+  .knot-level.selected {
+    border-color: transparent;
+    background: rgba(47, 124, 246, 0.22);
+  }
+  .knot-level.selected .knot-level-n {
+    border-color: #2f7cf6;
+  }
+  .knot-level.done .knot-level-n {
+    border-color: #6fbf73;
+    color: #8fd694;
+  }
+  .knot-level.soon {
+    display: none;
+  }
+  .knot-soon-note {
+    display: block;
+    padding: 6px 10px 0;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+}
+
+/* While choosing a knot, the step beneath steps aside. */
+@media (max-width: 720px) {
+  .knot-panel.open .knot-steps {
     display: none;
   }
 }
